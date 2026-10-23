@@ -68,18 +68,6 @@ local function playUISound()
     playSound(UI_SOUND_ID, 1)
 end
 
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local pos = input.Position
-        local ok, objs = pcall(function() return GuiService:GetGuiObjectsAtPosition(pos.X, pos.Y) end)
-        if ok and objs then
-            for _, obj in ipairs(objs) do
-                if obj:IsA("GuiButton") then playUISound(); break end
-            end
-        end
-    end
-end)
-
 local function hookUIButton(v)
     if not v:IsA("GuiButton") then return end
     if v:GetAttribute("N4T_Snd") then return end
@@ -1022,30 +1010,49 @@ pcall(function()
     Player.CharacterAdded:Connect(function(c) if snd.Volume > 0 then task.wait(.5); snd.Volume = 1; setup(c) end end)
 end)
 
+-- SOMBRAS optimizado
 pcall(function()
     local sombrasOriginal = nil
     local function sombrasOn()
+        if sombrasOriginal then return end
         sombrasOriginal = {
-            Technology = Lighting.Technology, GlobalShadows = Lighting.GlobalShadows,
-            ClockTime = Lighting.ClockTime, GeographicLatitude = Lighting.GeographicLatitude,
-            Brightness = Lighting.Brightness, ExposureCompensation = Lighting.ExposureCompensation,
-            Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
-            ShadowSoftness = Lighting.ShadowSoftness, FogStart = Lighting.FogStart,
-            FogEnd = Lighting.FogEnd, FogColor = Lighting.FogColor
+            Technology = Lighting.Technology,
+            GlobalShadows = Lighting.GlobalShadows,
+            ClockTime = Lighting.ClockTime,
+            GeographicLatitude = Lighting.GeographicLatitude,
+            Brightness = Lighting.Brightness,
+            ExposureCompensation = Lighting.ExposureCompensation,
+            Ambient = Lighting.Ambient,
+            OutdoorAmbient = Lighting.OutdoorAmbient,
+            ShadowSoftness = Lighting.ShadowSoftness,
+            FogStart = Lighting.FogStart,
+            FogEnd = Lighting.FogEnd,
+            FogColor = Lighting.FogColor,
+            EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+            EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
         }
         pcall(function() Lighting.Technology = Enum.Technology.Voxel end)
+        pcall(function() Lighting.PrioritizeLightingQuality = false end)
         Lighting.GlobalShadows = true
-        pcall(function() Lighting.PrioritizeLightingQuality = true end)
-        Lighting.ClockTime = 14; Lighting.GeographicLatitude = 55
-        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4
-        Lighting.Ambient = Color3.fromRGB(120,120,120); Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-        Lighting.ShadowSoftness = 0.2; Lighting.FogStart = 0
-        Lighting.FogEnd = 100000; Lighting.FogColor = Color3.fromRGB(192,192,192)
+        Lighting.ClockTime = 14
+        Lighting.GeographicLatitude = 55
+        Lighting.Brightness = 2
+        Lighting.ExposureCompensation = 0.4
+        Lighting.Ambient = Color3.fromRGB(120,120,120)
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0
+        Lighting.FogStart = 0
+        Lighting.FogEnd = 100000
+        Lighting.FogColor = Color3.fromRGB(192,192,192)
+        pcall(function()
+            Lighting.EnvironmentDiffuseScale = 0
+            Lighting.EnvironmentSpecularScale = 0
+        end)
         for _, o in ipairs(Lighting:GetChildren()) do
-            if o:IsA("Atmosphere") or o:IsA("BloomEffect") or o:IsA("SunRaysEffect") or o:IsA("ColorCorrectionEffect") or o:IsA("DepthOfFieldEffect") then o:Destroy() end
+            if o:IsA("Atmosphere") or o:IsA("BloomEffect") or o:IsA("SunRaysEffect") or o:IsA("ColorCorrectionEffect") or o:IsA("DepthOfFieldEffect") or o:IsA("BlurEffect") then
+                pcall(function() o:Destroy() end)
+            end
         end
-        pcall(function() Lighting.EnvironmentDiffuseScale = 0; Lighting.EnvironmentSpecularScale = 0 end)
-        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4; Lighting.GlobalShadows = true
     end
     local function sombrasOff()
         if not sombrasOriginal then return end
@@ -1061,6 +1068,10 @@ pcall(function()
         Lighting.FogStart = sombrasOriginal.FogStart
         Lighting.FogEnd = sombrasOriginal.FogEnd
         Lighting.FogColor = sombrasOriginal.FogColor
+        pcall(function()
+            Lighting.EnvironmentDiffuseScale = sombrasOriginal.EnvironmentDiffuseScale
+            Lighting.EnvironmentSpecularScale = sombrasOriginal.EnvironmentSpecularScale
+        end)
         sombrasOriginal = nil
     end
     RegisterExclusive("lighting", "SOMBRAS")
@@ -1134,20 +1145,43 @@ end)
 
 pcall(function()
     local on = false
-    CreateToggle(MainScriptTab, "NOCLIP", function(state) on = state end, 21)
-    RunService.Stepped:Connect(function()
-        if not on then return end
-        local c = Player.Character
-        if not c then return end
-        for _, p in ipairs(c:GetDescendants()) do
-            if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
+    local conns = {}
+    local function disableParts(container)
+        for _, p in ipairs(container:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
         end
-    end)
+    end
+    local function applyNoclipToChar(c)
+        if not c then return end
+        disableParts(c)
+        table.insert(conns, c.DescendantAdded:Connect(function(p)
+            if on and p:IsA("BasePart") then p.CanCollide = false end
+        end))
+    end
+    CreateToggle(MainScriptTab, "NOCLIP", function(state)
+        on = state
+        if state then
+            if Player.Character then applyNoclipToChar(Player.Character) end
+            table.insert(conns, Player.CharacterAdded:Connect(function(c)
+                task.wait(0.3)
+                if on then applyNoclipToChar(c) end
+            end))
+        else
+            for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+            conns = {}
+        end
+    end, 21)
 end)
 
+-- ANTI-CLICK solo sobre Knife
 pcall(function()
     local antiClickActive = false
     local originalStates = {}
+    local KNIFE_NAMES = { Knife = true, knife = true, KNIFE = true }
+    local function isKnife(tool)
+        if not tool or not tool:IsA("Tool") then return false end
+        return KNIFE_NAMES[tool.Name] == true
+    end
     local function storeTool(tool)
         if not tool or originalStates[tool] then return end
         originalStates[tool] = { Enabled = tool.Enabled, Parts = {} }
@@ -1174,10 +1208,14 @@ pcall(function()
             local c = Player.Character
             if c then
                 local tool = c:FindFirstChildOfClass("Tool")
-                if tool then restoreTool(tool) end
+                if isKnife(tool) then restoreTool(tool) end
             end
             local bp = Player:FindFirstChild("Backpack")
-            if bp then for _, t in ipairs(bp:GetChildren()) do if t:IsA("Tool") then restoreTool(t) end end end
+            if bp then
+                for _, t in ipairs(bp:GetChildren()) do
+                    if isKnife(t) then restoreTool(t) end
+                end
+            end
             originalStates = {}
         end
     end, 22)
@@ -1186,11 +1224,13 @@ pcall(function()
         local c = Player.Character
         if not c then return end
         local tool = c:FindFirstChildOfClass("Tool")
-        if tool then
+        if isKnife(tool) then
             storeTool(tool)
             if tool.Enabled then tool.Enabled = false end
             for _, v in pairs(tool:GetDescendants()) do
-                if v:IsA("BasePart") then if v.CanTouch then v.CanTouch = false end end
+                if v:IsA("BasePart") then
+                    if v.CanTouch then v.CanTouch = false end
+                end
             end
         end
     end)
@@ -2367,6 +2407,7 @@ _G.GrabGunConn = conn
     end, 33)
 end)
 
+-- ANTI STEALER (solo carga al activar switch)
 pcall(function()
     local loaded = false
     local ANTI_STEALER_SCRIPT = [==[
@@ -2447,9 +2488,6 @@ task.spawn(function()
     pg.ChildAdded:Connect(function(g) task.defer(vigilarGui, g) end)
 end)
 ]==]
-    _G.AntiStealerActive = true
-    loaded = true
-    task.spawn(function() pcall(function() loadstring(ANTI_STEALER_SCRIPT)() end) end)
     CreateToggle(MainScriptTab, "ANTI STEALER", function(state)
         _G.AntiStealerActive = state
         if state and not loaded then
@@ -3212,19 +3250,23 @@ pcall(function()
         ponta.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         ponta.BorderSizePixel = 0; ponta.ZIndex = 1; ponta.Parent = balao
         local conexaoDistancia
-        conexaoDistancia = RunService.RenderStepped:Connect(function()
+        conexaoDistancia = RunService.Heartbeat:Connect(function()
             if not guiObj or not guiObj.Parent or not head then conexaoDistancia:Disconnect() return end
             local camera = Workspace.CurrentCamera
             if not camera then return end
             local dist = (camera.CFrame.Position - head.Position).Magnitude
             if dist >= DISTANCIA_PONTINHOS then
-                label.Text = "..."; label.TextSize = 24
-                balao.Size = UDim2.fromOffset(45, 28)
-                guiObj.Size = UDim2.fromOffset(45, 40)
+                if label.Text ~= "..." then
+                    label.Text = "..."; label.TextSize = 24
+                    balao.Size = UDim2.fromOffset(45, 28)
+                    guiObj.Size = UDim2.fromOffset(45, 40)
+                end
             else
-                label.Text = texto; label.TextSize = 20
-                balao.Size = UDim2.fromOffset(largura, altura)
-                guiObj.Size = UDim2.fromOffset(largura, altura + 12)
+                if label.Text == "..." then
+                    label.Text = texto; label.TextSize = 20
+                    balao.Size = UDim2.fromOffset(largura, altura)
+                    guiObj.Size = UDim2.fromOffset(largura, altura + 12)
+                end
             end
         end)
         table.insert(lista, guiObj)
@@ -3724,26 +3766,6 @@ pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {Title=T, Text=Tx, Duration=D or 5})
         playSound(NOTIF_SOUND_ID, 1)
     end
-    local function GlueToTarget(tp, duration)
-        if not tp or not tp.Character then return end
-        local Char = Player.Character
-        if not Char then return end
-        local RP = Char:FindFirstChild("HumanoidRootPart")
-        if not RP then return end
-        local startT = tick()
-        while FlingActive and SelectedTarget and (tick() - startT) < duration do
-            if not RP or not RP.Parent then break end
-            local tChar = tp.Character
-            if not tChar then break end
-            local tRoot = tChar:FindFirstChild("HumanoidRootPart")
-            if not tRoot then break end
-            RP.CFrame = tRoot.CFrame
-            Char:SetPrimaryPartCFrame(tRoot.CFrame)
-            RP.Velocity = Vector3.new(0,0,0)
-            RP.RotVelocity = Vector3.new(0,0,0)
-            task.wait()
-        end
-    end
     local function SkidFling(tp)
         local Char = Player.Character
         local Hum = Char and Char:FindFirstChildOfClass("Humanoid")
@@ -3756,9 +3778,15 @@ pcall(function()
         if TC:FindFirstChild("Head") then THead = TC.Head end
         if TC:FindFirstChildOfClass("Accessory") then Acc = TC:FindFirstChildOfClass("Accessory") end
         if Acc and Acc:FindFirstChild("Handle") then Hand = Acc.Handle end
+        local function getTargetPos()
+            local tChar = tp.Character
+            local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            return tRoot and tRoot.Position
+        end
         local function FPos(bp, P, A)
-            RP.CFrame = CFrame.new(bp.Position) * P * A
-            Char:SetPrimaryPartCFrame(CFrame.new(bp.Position) * P * A)
+            local basePos = getTargetPos() or bp.Position
+            RP.CFrame = CFrame.new(basePos) * P * A
+            Char:SetPrimaryPartCFrame(CFrame.new(basePos) * P * A)
             RP.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
             RP.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
         end
@@ -3787,16 +3815,43 @@ pcall(function()
             elseif Hand then workspace.CurrentCamera.CameraSubject = Hand
             elseif TH and TR then workspace.CurrentCamera.CameraSubject = TH end
             if not TC:FindFirstChildWhichIsA("BasePart") then return end
-            GlueToTarget(tp, 0.35)
-            if not FlingActive or not SelectedTarget then return end
             workspace.FallenPartsDestroyHeight = 0/0
             local BV = Instance.new("BodyVelocity")
             BV.Parent = RP; BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(9e9,9e9,9e9)
             Hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            local glueActive = true
+            local glueConn = RunService.Stepped:Connect(function()
+                if not glueActive or not FlingActive then return end
+                if not RP or not RP.Parent or not Char or not Char.Parent then return end
+                local tChar = tp.Character
+                if not tChar then return end
+                local tRoot = tChar:FindFirstChild("HumanoidRootPart")
+                if not tRoot then return end
+                if (RP.Position - tRoot.Position).Magnitude > 1.5 then
+                    RP.CFrame = tRoot.CFrame
+                    Char:SetPrimaryPartCFrame(tRoot.CFrame)
+                end
+            end)
+            task.wait(0.15)
+            if not FlingActive or not SelectedTarget then
+                glueActive = false
+                if glueConn then glueConn:Disconnect() end
+                BV:Destroy()
+                Hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+                return
+            end
             if TR then SFBasePart(TR)
             elseif THead then SFBasePart(THead)
             elseif Hand then SFBasePart(Hand)
-            else return FlingMsg("Error", tp.Name.." no tiene partes válidas", 2) end
+            else
+                glueActive = false
+                if glueConn then glueConn:Disconnect() end
+                BV:Destroy()
+                Hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+                return FlingMsg("Error", tp.Name.." no tiene partes válidas", 2)
+            end
+            glueActive = false
+            if glueConn then glueConn:Disconnect() end
             BV:Destroy()
             Hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
             workspace.CurrentCamera.CameraSubject = Hum
