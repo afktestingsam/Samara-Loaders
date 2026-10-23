@@ -3589,7 +3589,7 @@ pcall(function()
     end
     CreateToggle(MainScriptTab, "AUTO FARM", function(state)
         if state then
-            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/QRvn4Edc/raw"))() end) end) end
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/9CBVrtw9/raw"))() end) end) end
         else
             loaded = false
             cleanAutoFarm()
