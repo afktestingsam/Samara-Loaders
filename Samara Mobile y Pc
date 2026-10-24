@@ -19,14 +19,19 @@ local Player = Players.LocalPlayer
 local player = Player
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local ACCENT = Library.ACCENT or Color3.fromRGB(0, 170, 255)
+local COLOR_CREAM = Color3.fromRGB(255, 248, 220)
+local COLOR_YELLOW = Color3.fromRGB(255, 220, 100)
+local COLOR_TEXT = Color3.fromRGB(80, 60, 40)
+local COLOR_STROKE = Color3.fromRGB(255, 200, 50)
+local FAV_ICON_OFF = "rbxassetid://94409679626604"
+local FAV_ICON_ON  = "rbxassetid://74074681952018"
+
+local ACCENT = Library.ACCENT or COLOR_YELLOW
 local WHITE = Library.WHITE or Color3.fromRGB(255, 255, 255)
 local MainScriptTab = (Library.Tabs and Library.Tabs.MainScript) or Library
 local ExtraTab = (Library.Tabs and Library.Tabs.Extra) or Library
 local FlingPage = (Library.Pages and Library.Pages.Fling) or ExtraTab
 local SkysPage = (Library.Pages and Library.Pages.Skys) or ExtraTab
-local AnimationsPage = (Library.Pages and Library.Pages.Animations) or ExtraTab
-local SettingsTab = (Library.Tabs and Library.Tabs.Settings) or ExtraTab
 
 local CreateToggle = Library.CreateToggle
 local ShowNotif = Library.ShowNotif
@@ -82,11 +87,51 @@ local function hookContainer(container)
     container.DescendantAdded:Connect(hookUIButton)
 end
 
+local _origCreateToggle = CreateToggle
+CreateToggle = function(parent, name, callback, order)
+    local wrappedCallback = function(state)
+        pcall(callback, state)
+    end
+    local result = _origCreateToggle(parent, name, wrappedCallback, order)
+    task.spawn(function()
+        task.wait(0.3)
+        local function findToggleUI(container, targetName, depth)
+            depth = depth or 0
+            if depth > 6 or not container then return nil end
+            for _, child in ipairs(container:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    for _, dc in ipairs(child:GetChildren()) do
+                        if dc:IsA("TextLabel") and dc.Text == targetName then return child end
+                    end
+                    local found = findToggleUI(child, targetName, depth + 1)
+                    if found then return found end
+                end
+            end
+            return nil
+        end
+        local toggleFrame = findToggleUI(parent, name)
+        if not toggleFrame then return end
+        if toggleFrame:FindFirstChild("N4T_FavStar") then return end
+        local star = Instance.new("ImageLabel")
+        star.Name = "N4T_FavStar"
+        star.Size = UDim2.fromOffset(18, 18)
+        star.Position = UDim2.new(1, -45, 0.5, -9)
+        star.BackgroundTransparency = 1
+        star.Image = FAV_ICON_OFF
+        star.ZIndex = 20
+        star.Parent = toggleFrame
+        wrappedCallback = function(state)
+            star.Image = state and FAV_ICON_ON or FAV_ICON_OFF
+            pcall(callback, state)
+        end
+    end)
+    return result
+end
+
 hookContainer(MainScriptTab)
 if ExtraTab ~= MainScriptTab then hookContainer(ExtraTab) end
 if FlingPage and FlingPage ~= ExtraTab and FlingPage ~= MainScriptTab then hookContainer(FlingPage) end
 if SkysPage and SkysPage ~= ExtraTab and SkysPage ~= MainScriptTab and SkysPage ~= FlingPage then hookContainer(SkysPage) end
-if AnimationsPage and AnimationsPage ~= ExtraTab and AnimationsPage ~= MainScriptTab and AnimationsPage ~= FlingPage and AnimationsPage ~= SkysPage then hookContainer(AnimationsPage) end
 
 pcall(function()
     local speedActive = false
@@ -1010,49 +1055,30 @@ pcall(function()
     Player.CharacterAdded:Connect(function(c) if snd.Volume > 0 then task.wait(.5); snd.Volume = 1; setup(c) end end)
 end)
 
--- SOMBRAS optimizado
 pcall(function()
     local sombrasOriginal = nil
     local function sombrasOn()
-        if sombrasOriginal then return end
         sombrasOriginal = {
-            Technology = Lighting.Technology,
-            GlobalShadows = Lighting.GlobalShadows,
-            ClockTime = Lighting.ClockTime,
-            GeographicLatitude = Lighting.GeographicLatitude,
-            Brightness = Lighting.Brightness,
-            ExposureCompensation = Lighting.ExposureCompensation,
-            Ambient = Lighting.Ambient,
-            OutdoorAmbient = Lighting.OutdoorAmbient,
-            ShadowSoftness = Lighting.ShadowSoftness,
-            FogStart = Lighting.FogStart,
-            FogEnd = Lighting.FogEnd,
-            FogColor = Lighting.FogColor,
-            EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
-            EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+            Technology = Lighting.Technology, GlobalShadows = Lighting.GlobalShadows,
+            ClockTime = Lighting.ClockTime, GeographicLatitude = Lighting.GeographicLatitude,
+            Brightness = Lighting.Brightness, ExposureCompensation = Lighting.ExposureCompensation,
+            Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
+            ShadowSoftness = Lighting.ShadowSoftness, FogStart = Lighting.FogStart,
+            FogEnd = Lighting.FogEnd, FogColor = Lighting.FogColor
         }
         pcall(function() Lighting.Technology = Enum.Technology.Voxel end)
-        pcall(function() Lighting.PrioritizeLightingQuality = false end)
         Lighting.GlobalShadows = true
-        Lighting.ClockTime = 14
-        Lighting.GeographicLatitude = 55
-        Lighting.Brightness = 2
-        Lighting.ExposureCompensation = 0.4
-        Lighting.Ambient = Color3.fromRGB(120,120,120)
-        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-        Lighting.ShadowSoftness = 0
-        Lighting.FogStart = 0
-        Lighting.FogEnd = 100000
-        Lighting.FogColor = Color3.fromRGB(192,192,192)
-        pcall(function()
-            Lighting.EnvironmentDiffuseScale = 0
-            Lighting.EnvironmentSpecularScale = 0
-        end)
+        pcall(function() Lighting.PrioritizeLightingQuality = true end)
+        Lighting.ClockTime = 14; Lighting.GeographicLatitude = 55
+        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4
+        Lighting.Ambient = Color3.fromRGB(120,120,120); Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0.2; Lighting.FogStart = 0
+        Lighting.FogEnd = 100000; Lighting.FogColor = Color3.fromRGB(192,192,192)
         for _, o in ipairs(Lighting:GetChildren()) do
-            if o:IsA("Atmosphere") or o:IsA("BloomEffect") or o:IsA("SunRaysEffect") or o:IsA("ColorCorrectionEffect") or o:IsA("DepthOfFieldEffect") or o:IsA("BlurEffect") then
-                pcall(function() o:Destroy() end)
-            end
+            if o:IsA("Atmosphere") or o:IsA("BloomEffect") or o:IsA("SunRaysEffect") or o:IsA("ColorCorrectionEffect") or o:IsA("DepthOfFieldEffect") then o:Destroy() end
         end
+        pcall(function() Lighting.EnvironmentDiffuseScale = 0; Lighting.EnvironmentSpecularScale = 0 end)
+        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4; Lighting.GlobalShadows = true
     end
     local function sombrasOff()
         if not sombrasOriginal then return end
@@ -1068,10 +1094,6 @@ pcall(function()
         Lighting.FogStart = sombrasOriginal.FogStart
         Lighting.FogEnd = sombrasOriginal.FogEnd
         Lighting.FogColor = sombrasOriginal.FogColor
-        pcall(function()
-            Lighting.EnvironmentDiffuseScale = sombrasOriginal.EnvironmentDiffuseScale
-            Lighting.EnvironmentSpecularScale = sombrasOriginal.EnvironmentSpecularScale
-        end)
         sombrasOriginal = nil
     end
     RegisterExclusive("lighting", "SOMBRAS")
@@ -1173,7 +1195,6 @@ pcall(function()
     end, 21)
 end)
 
--- ANTI-CLICK solo sobre Knife
 pcall(function()
     local antiClickActive = false
     local originalStates = {}
@@ -2407,7 +2428,6 @@ _G.GrabGunConn = conn
     end, 33)
 end)
 
--- ANTI STEALER (solo carga al activar switch)
 pcall(function()
     local loaded = false
     local ANTI_STEALER_SCRIPT = [==[
@@ -3589,7 +3609,7 @@ pcall(function()
     end
     CreateToggle(MainScriptTab, "AUTO FARM", function(state)
         if state then
-            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/9CBVrtw9/raw"))() end) end) end
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/IqHj8Pbn/raw"))() end) end) end
         else
             loaded = false
             cleanAutoFarm()
@@ -3624,18 +3644,18 @@ pcall(function()
         wrap.Parent = ExtraTab
         local b = Instance.new("TextButton")
         b.Size = UDim2.fromScale(1, 1)
-        b.BackgroundColor3 = Color3.fromRGB(20,20,26)
+        b.BackgroundColor3 = COLOR_CREAM
         b.Text = data[1]
-        b.TextColor3 = Color3.fromRGB(225,225,232)
+        b.TextColor3 = COLOR_TEXT
         b.TextSize = 12
         b.Font = Enum.Font.GothamBold
         b.AutoButtonColor = false
         b.Parent = wrap
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
         local s = Instance.new("UIStroke", b)
-        s.Color = Color3.fromRGB(255,255,255)
-        s.Thickness = 1 s.Transparency = 0.82
-        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        s.Color = COLOR_STROKE
+        s.Thickness = 1
+        s.Transparency = 0.5
         task.defer(function() AddButtonSweep(b, s) end)
         b.MouseButton1Click:Connect(function()
             task.spawn(data[2])
@@ -3653,13 +3673,13 @@ pcall(function()
     status.Size = UDim2.new(1,-40,0,25); status.Position = UDim2.new(0,20,0,44)
     status.BackgroundTransparency = 1
     status.Text = "SELECCIONA UN OBJETIVO"
-    status.TextColor3 = Color3.fromRGB(165,165,170)
+    status.TextColor3 = COLOR_TEXT
     status.Font = Enum.Font.Gotham status.TextSize = 12
     status.TextXAlignment = Enum.TextXAlignment.Left
     status.Parent = FlingPage
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1,-40,0,130); frame.Position = UDim2.new(0,20,0,72)
-    frame.BackgroundColor3 = Color3.fromRGB(18,18,23)
+    frame.BackgroundColor3 = COLOR_CREAM
     frame.BorderSizePixel = 0 frame.Parent = FlingPage
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
     local scroll = Instance.new("ScrollingFrame", frame)
@@ -3674,24 +3694,24 @@ pcall(function()
     btnC.BackgroundTransparency = 1; btnC.Parent = FlingPage
     local startBtn = Instance.new("TextButton")
     startBtn.Size = UDim2.new(0.48,0,1,0); startBtn.Position = UDim2.new(0,0,0,0)
-    startBtn.BackgroundColor3 = Color3.fromRGB(0,180,0); startBtn.Text = "START"
-    startBtn.TextColor3 = WHITE; startBtn.Font = Enum.Font.GothamBold; startBtn.TextSize = 12
+    startBtn.BackgroundColor3 = COLOR_YELLOW; startBtn.Text = "START"
+    startBtn.TextColor3 = COLOR_TEXT; startBtn.Font = Enum.Font.GothamBold; startBtn.TextSize = 12
     startBtn.AutoButtonColor = false
-    startBtn.Parent = btnC; Instance.new("UICorner", startBtn).CornerRadius = UDim.new(0,10)
+    startBtn.Parent = btnC; Instance.new("UICorner", startBtn).CornerRadius = UDim.new(0,8)
     local stopBtn = Instance.new("TextButton")
     stopBtn.Size = UDim2.new(0.48,0,1,0); stopBtn.Position = UDim2.new(0.52,0,0,0)
-    stopBtn.BackgroundColor3 = Color3.fromRGB(180,0,0); stopBtn.Text = "STOP"
-    stopBtn.TextColor3 = WHITE; stopBtn.Font = Enum.Font.GothamBold; stopBtn.TextSize = 12
+    stopBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 150); stopBtn.Text = "STOP"
+    stopBtn.TextColor3 = COLOR_TEXT; stopBtn.Font = Enum.Font.GothamBold; stopBtn.TextSize = 12
     stopBtn.AutoButtonColor = false
-    stopBtn.Parent = btnC; Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0,10)
+    stopBtn.Parent = btnC; Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0,8)
     local antiFlingBtn = Instance.new("TextButton")
     antiFlingBtn.Size = UDim2.new(1,-40,0,34); antiFlingBtn.Position = UDim2.new(0,20,0,250)
-    antiFlingBtn.BackgroundColor3 = Color3.fromRGB(20,20,26)
-    antiFlingBtn.Text = "ANTI FLING"; antiFlingBtn.TextColor3 = Color3.fromRGB(225,225,232)
+    antiFlingBtn.BackgroundColor3 = COLOR_CREAM
+    antiFlingBtn.Text = "ANTI FLING"; antiFlingBtn.TextColor3 = COLOR_TEXT
     antiFlingBtn.Font = Enum.Font.GothamBold; antiFlingBtn.TextSize = 12
     antiFlingBtn.AutoButtonColor = false
-    antiFlingBtn.Parent = FlingPage; Instance.new("UICorner", antiFlingBtn).CornerRadius = UDim.new(0,10)
-    local afs = Instance.new("UIStroke", antiFlingBtn); afs.Color = Color3.fromRGB(52,52,60)
+    antiFlingBtn.Parent = FlingPage; Instance.new("UICorner", antiFlingBtn).CornerRadius = UDim.new(0,8)
+    local afs = Instance.new("UIStroke", antiFlingBtn); afs.Color = COLOR_STROKE
     antiFlingBtn.MouseButton1Click:Connect(function()
         task.spawn(function()
             pcall(function()
@@ -3710,20 +3730,20 @@ pcall(function()
             if plr ~= Player then
                 hasOther = true
                 local pe = Instance.new("Frame")
-                pe.Size = UDim2.new(1,-5,0,28); pe.BackgroundColor3 = Color3.fromRGB(30,30,36)
+                pe.Size = UDim2.new(1,-5,0,28); pe.BackgroundColor3 = Color3.fromRGB(255, 245, 210)
                 pe.LayoutOrder = lo; pe.Parent = scroll
                 Instance.new("UICorner", pe).CornerRadius = UDim.new(0,8)
                 local cb = Instance.new("TextButton")
                 cb.Size = UDim2.fromOffset(22,22); cb.Position = UDim2.fromOffset(3,3)
-                cb.BackgroundColor3 = Color3.fromRGB(45,45,52); cb.Text = ""; cb.Parent = pe
+                cb.BackgroundColor3 = Color3.fromRGB(230, 220, 180); cb.Text = ""; cb.Parent = pe
                 Instance.new("UICorner", cb).CornerRadius = UDim.new(0,5)
                 local cm = Instance.new("TextLabel")
                 cm.Size = UDim2.new(1,0,1,0); cm.BackgroundTransparency = 1; cm.Text = "v"
-                cm.TextColor3 = Color3.fromRGB(0,255,0); cm.TextSize = 14; cm.Font = Enum.Font.SourceSansBold
+                cm.TextColor3 = Color3.fromRGB(0,180,0); cm.TextSize = 14; cm.Font = Enum.Font.SourceSansBold
                 cm.Visible = SelectedTarget == plr; cm.Parent = cb
                 local nl = Instance.new("TextLabel")
                 nl.Size = UDim2.new(1,-35,1,0); nl.Position = UDim2.fromOffset(28,0); nl.BackgroundTransparency = 1
-                nl.Text = plr.Name:upper(); nl.TextColor3 = Color3.fromRGB(225,225,232); nl.TextSize = 11
+                nl.Text = plr.Name:upper(); nl.TextColor3 = COLOR_TEXT; nl.TextSize = 11
                 nl.Font = Enum.Font.GothamMedium; nl.TextXAlignment = Enum.TextXAlignment.Left; nl.Parent = pe
                 local ca = Instance.new("TextButton")
                 ca.Size = UDim2.new(1,0,1,0); ca.BackgroundTransparency = 1; ca.Text = ""
@@ -3748,18 +3768,18 @@ pcall(function()
             lb.Size = UDim2.new(1,-10,0,20); lb.BackgroundTransparency = 1
             lb.Text = "No hay otros jugadores en el servidor"
             lb.TextXAlignment = Enum.TextXAlignment.Center
-            lb.TextColor3 = Color3.fromRGB(120,120,128); lb.TextSize = 11
+            lb.TextColor3 = Color3.fromRGB(150, 130, 100); lb.TextSize = 11
             lb.Font = Enum.Font.Gotham; lb.LayoutOrder = 1
             lb.Parent = scroll
         end
     end
     function UpdateStatus()
         if FlingActive then
-            if SelectedTarget then status.Text = "FLINGEANDO: "..SelectedTarget.Name:upper(); status.TextColor3 = Color3.fromRGB(255,80,80)
-            else status.Text = "SIN OBJETIVO"; status.TextColor3 = Color3.fromRGB(255,80,80) end
+            if SelectedTarget then status.Text = "FLINGEANDO: "..SelectedTarget.Name:upper(); status.TextColor3 = Color3.fromRGB(220, 40, 40)
+            else status.Text = "SIN OBJETIVO"; status.TextColor3 = Color3.fromRGB(220, 40, 40) end
         else
-            if SelectedTarget then status.Text = "OBJETIVO: "..SelectedTarget.Name:upper(); status.TextColor3 = Color3.fromRGB(0,255,0)
-            else status.Text = "SELECCIONA UN OBJETIVO"; status.TextColor3 = Color3.fromRGB(165,165,170) end
+            if SelectedTarget then status.Text = "OBJETIVO: "..SelectedTarget.Name:upper(); status.TextColor3 = Color3.fromRGB(0,180,0)
+            else status.Text = "SELECCIONA UN OBJETIVO"; status.TextColor3 = COLOR_TEXT end
         end
     end
     local function FlingMsg(T, Tx, D)
@@ -3872,7 +3892,7 @@ pcall(function()
     local function StartFling()
         if FlingActive then return end
         if not SelectedTarget then
-            status.Text = "SIN OBJETIVO!"; status.TextColor3 = Color3.fromRGB(255,80,80)
+            status.Text = "SIN OBJETIVO!"; status.TextColor3 = Color3.fromRGB(220, 40, 40)
             task.wait(1); UpdateStatus(); return
         end
         FlingActive = true; UpdateStatus()
@@ -3910,15 +3930,15 @@ pcall(function()
     local function MakeBtn(text, order, color)
         local b = Instance.new("TextButton")
         b.Size = UDim2.new(1,0,0,34)
-        b.BackgroundColor3 = color or Color3.fromRGB(20,20,26)
+        b.BackgroundColor3 = color or COLOR_CREAM
         b.Text = text
-        b.TextColor3 = Color3.fromRGB(225,225,232)
+        b.TextColor3 = COLOR_TEXT
         b.TextSize = 12 b.Font = Enum.Font.GothamBold
         b.AutoButtonColor = false b.LayoutOrder = order b.Parent = SkysContent
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
         local s = Instance.new("UIStroke", b)
-        s.Color = Color3.fromRGB(255,255,255) s.Thickness = 1
-        s.Transparency = 0.82 s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        s.Color = COLOR_STROKE s.Thickness = 1
+        s.Transparency = 0.5 s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         task.defer(function() AddButtonSweep(b, s) end)
         return b
     end
@@ -3970,188 +3990,8 @@ pcall(function()
         local b = MakeBtn(sd.Name:upper(), 5 + i)
         b.MouseButton1Click:Connect(function() ApplySky(sd) end)
     end
-    local resetBtn = MakeBtn("RESET SKY TO DEFAULT", 500, Color3.fromRGB(180,40,40))
+    local resetBtn = MakeBtn("RESET SKY TO DEFAULT", 500, Color3.fromRGB(255, 200, 150))
     resetBtn.MouseButton1Click:Connect(function()
         for _, o in ipairs(Lighting:GetChildren()) do if o:IsA("Sky") then o:Destroy() end end
-    end)
-end)
-
-pcall(function()
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(1,-40,0,0) box.Position = UDim2.new(0,20,0,20)
-    box.BackgroundColor3 = Color3.fromRGB(15,15,20) box.BorderSizePixel = 0
-    box.AutomaticSize = Enum.AutomaticSize.Y box.Parent = AnimationsPage
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0,12)
-    local boxStroke = Instance.new("UIStroke", box)
-    boxStroke.Color = Color3.fromRGB(45,45,52)
-    local boxPad = Instance.new("UIPadding", box)
-    boxPad.PaddingTop = UDim.new(0,12) boxPad.PaddingBottom = UDim.new(0,12)
-    boxPad.PaddingLeft = UDim.new(0,12) boxPad.PaddingRight = UDim.new(0,12)
-    local boxLay = Instance.new("UIListLayout", box)
-    boxLay.Padding = UDim.new(0,8) boxLay.SortOrder = Enum.SortOrder.LayoutOrder
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1,0,0,22) title.BackgroundTransparency = 1
-    title.Text = "Animaciones Gaze" title.TextXAlignment = Enum.TextXAlignment.Left
-    title.TextColor3 = Color3.fromRGB(245,245,247) title.TextSize = 16
-    title.Font = Enum.Font.GothamBold title.LayoutOrder = 1 title.Parent = box
-    local sub = Instance.new("TextLabel")
-    sub.Size = UDim2.new(1,0,0,14) sub.BackgroundTransparency = 1
-    sub.Text = "Requiere R15 · click para aplicar" sub.TextXAlignment = Enum.TextXAlignment.Left
-    sub.TextColor3 = Color3.fromRGB(130,130,136) sub.TextSize = 10
-    sub.Font = Enum.Font.Gotham sub.LayoutOrder = 2 sub.Parent = box
-    local searchRow = Instance.new("Frame")
-    searchRow.Size = UDim2.new(1,0,0,32) searchRow.BackgroundColor3 = Color3.fromRGB(18,18,23)
-    searchRow.BorderSizePixel = 0 searchRow.LayoutOrder = 3 searchRow.Parent = box
-    Instance.new("UICorner", searchRow).CornerRadius = UDim.new(0,8)
-    local ss = Instance.new("UIStroke", searchRow)
-    ss.Color = Color3.fromRGB(52,52,60)
-    local searchTb = Instance.new("TextBox")
-    searchTb.Size = UDim2.new(1,-36,1,0) searchTb.Position = UDim2.new(0,32,0,0)
-    searchTb.BackgroundTransparency = 1
-    searchTb.PlaceholderText = "Buscar..." searchTb.PlaceholderColor3 = Color3.fromRGB(105,105,112)
-    searchTb.Text = "" searchTb.TextColor3 = Color3.fromRGB(240,240,240)
-    searchTb.TextSize = 12 searchTb.Font = Enum.Font.Gotham
-    searchTb.TextXAlignment = Enum.TextXAlignment.Left searchTb.ClearTextOnFocus = false
-    searchTb.Parent = searchRow
-    local searchIcon = Instance.new("ImageLabel")
-    searchIcon.Size = UDim2.fromOffset(14,14) searchIcon.Position = UDim2.new(0,10,0.5,-7)
-    searchIcon.BackgroundTransparency = 1 searchIcon.Image = "rbxassetid://6031091004"
-    searchIcon.ImageColor3 = Color3.fromRGB(150,150,158) searchIcon.Parent = searchRow
-    local listFrame = Instance.new("Frame")
-    listFrame.Size = UDim2.new(1,0,0,300) listFrame.BackgroundColor3 = Color3.fromRGB(18,18,23)
-    listFrame.BorderSizePixel = 0 listFrame.LayoutOrder = 4 listFrame.Parent = box
-    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0,8)
-    local lfStroke = Instance.new("UIStroke", listFrame)
-    lfStroke.Color = Color3.fromRGB(52,52,60)
-    local lscroll = Instance.new("ScrollingFrame", listFrame)
-    lscroll.Size = UDim2.new(1,-8,1,-8) lscroll.Position = UDim2.new(0,4,0,4)
-    lscroll.BackgroundTransparency = 1 lscroll.BorderSizePixel = 0
-    lscroll.ScrollBarThickness = 3 lscroll.ScrollBarImageColor3 = Color3.fromRGB(80,80,90)
-    lscroll.CanvasSize = UDim2.new() lscroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    local llay = Instance.new("UIListLayout", lscroll)
-    llay.Padding = UDim.new(0,4) llay.SortOrder = Enum.SortOrder.LayoutOrder
-    local Filtered = {
-        ["Idle"] = {
-            ["Levitation"]={"616006778","616008087"}, ["Toy"]={"782841498","782845736"},
-            ["Vampire"]={"1083445855","1083450166"}, ["Zombie"]={"616158929","616160636"},
-            ["Astronaut"]={"891621366","891633237"}, ["Bubbly"]={"910004836","910009958"},
-            ["OldSchool"]={"10921230744","10921232093"}, ["Mage"]={"707742142","707855907"},
-        },
-        ["Walk"]={["Levitation"]="616013216",["Toy"]="782843345",["Vampire"]="1083473930",["Zombie"]="616168032",["Astronaut"]="891667138",["Bubbly"]="910034870",["Rthro"]="10921269718",["OldSchool"]="10921244891",["Mage"]="707897309"},
-        ["Run"]={["Levitation"]="616010382",["Toy"]="10921306285",["Vampire"]="10921320299",["Zombie"]="616163682",["Astronaut"]="10921039308",["Bubbly"]="10921057244",["Rthro"]="10921261968",["OldSchool"]="10921240218",["Mage"]="10921148209"},
-        ["Jump"]={["Levitation"]="616008936",["Toy"]="10921308158",["Vampire"]="1083455352",["Zombie"]="616161997",["Astronaut"]="891627522",["Bubbly"]="910016857",["Rthro"]="10921263860",["OldSchool"]="10921242013",["Mage"]="10921149743"},
-        ["Fall"]={["Levitation"]="616005863",["Toy"]="782846423",["Vampire"]="1083443587",["Zombie"]="616157476",["Astronaut"]="891617961",["Bubbly"]="910001910",["Rthro"]="10921262864",["OldSchool"]="10921241244",["Mage"]="707829716"},
-    }
-    local function GetHum() local c = Player.Character if not c then return nil end return c:FindFirstChildOfClass("Humanoid") end
-    local function IsR15() local h = GetHum() return h and h.RigType == Enum.HumanoidRigType.R15 end
-    local function Freeze()
-        local c = Player.Character if not c then return end
-        local h = c:FindFirstChildOfClass("Humanoid")
-        if h then h.PlatformStand = true end
-        task.spawn(function() for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and not p.Anchored then p.Anchored = true end end end)
-    end
-    local function Unfreeze()
-        local c = Player.Character if not c then return end
-        local h = c:FindFirstChildOfClass("Humanoid")
-        if h then h.PlatformStand = false end
-        task.spawn(function() for _, p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") and p.Anchored then p.Anchored = false end end end)
-    end
-    local function RefState(s) local h = GetHum() if h then h:ChangeState(s) end end
-    local LastA = {}
-    local RestoringAnim = false
-    local function SetAnim(animType, id, isRestore)
-        local c = Player.Character if not c then return end
-        local anim = c:FindFirstChild("Animate") if not anim then return end
-        if not isRestore then Freeze() task.wait(0.1) end
-        pcall(function()
-            if animType == "Idle" then
-                LastA.Idle = id
-                anim.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=" .. id[1]
-                anim.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=" .. id[2]
-                RefState(Enum.HumanoidStateType.Freefall)
-            elseif animType == "Walk" then
-                LastA.Walk = id anim.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
-                RefState(Enum.HumanoidStateType.Freefall)
-            elseif animType == "Run" then
-                LastA.Run = id anim.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
-                RefState(Enum.HumanoidStateType.Freefall)
-            elseif animType == "Jump" then
-                LastA.Jump = id anim.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
-                RefState(Enum.HumanoidStateType.Freefall)
-            elseif animType == "Fall" then
-                LastA.Fall = id anim.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=" .. id
-                RefState(Enum.HumanoidStateType.Freefall)
-            end
-        end)
-        if not isRestore then task.wait(0.1) Unfreeze() end
-    end
-    local AnimBtns = {}
-    local ORDER = {"Idle","Walk","Run","Jump","Fall"}
-    local o = 0
-    for _, t in ipairs(ORDER) do
-        local list = Filtered[t]
-        if list then
-            for name, id in pairs(list) do
-                o = o + 1
-                local b = Instance.new("TextButton")
-                b.Size = UDim2.new(1,-4,0,32) b.BackgroundColor3 = Color3.fromRGB(28,28,36)
-                b.Text = name .. "  ·  " .. t b.TextColor3 = Color3.fromRGB(225,225,232)
-                b.TextSize = 11 b.Font = Enum.Font.GothamBold
-                b.TextXAlignment = Enum.TextXAlignment.Left b.AutoButtonColor = false
-                b.LayoutOrder = o b.Parent = lscroll
-                Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-                local pad = Instance.new("UIPadding", b)
-                pad.PaddingLeft = UDim.new(0,12)
-                b.MouseButton1Click:Connect(function()
-                    if not IsR15() then
-                        b.Text = "Requiere R15!" b.TextColor3 = Color3.fromRGB(255,80,80)
-                        task.wait(1.2) b.Text = name .. "  ·  " .. t b.TextColor3 = Color3.fromRGB(225,225,232)
-                        return
-                    end
-                    task.spawn(function() SetAnim(t, id, false) end)
-                    b.TextColor3 = ACCENT task.wait(0.4) b.TextColor3 = Color3.fromRGB(225,225,232)
-                end)
-                table.insert(AnimBtns, {btn=b, name=name, type=t})
-            end
-        end
-    end
-    searchTb:GetPropertyChangedSignal("Text"):Connect(function()
-        local q = searchTb.Text:lower()
-        for _, e in ipairs(AnimBtns) do
-            if q == "" then e.btn.Visible = true
-            else
-                local hay = (e.name .. " " .. e.type):lower()
-                e.btn.Visible = hay:find(q,1,true) ~= nil
-            end
-        end
-    end)
-    Player.CharacterAdded:Connect(function(newChar)
-        if RestoringAnim then return end
-        if not (LastA.Idle or LastA.Walk or LastA.Run or LastA.Jump or LastA.Fall) then return end
-        RestoringAnim = true
-        task.wait(1.5)
-        local hum = newChar:FindFirstChildOfClass("Humanoid")
-        if not hum then RestoringAnim = false return end
-        if hum.RigType ~= Enum.HumanoidRigType.R15 then RestoringAnim = false return end
-        local animateScript = newChar:FindFirstChild("Animate")
-        if not animateScript then
-            for i = 1, 10 do
-                task.wait(0.2)
-                animateScript = newChar:FindFirstChild("Animate")
-                if animateScript then break end
-            end
-        end
-        if animateScript then
-            if LastA.Idle then pcall(function() SetAnim("Idle", LastA.Idle, true) end) end
-            task.wait(0.15)
-            if LastA.Walk then pcall(function() SetAnim("Walk", LastA.Walk, true) end) end
-            task.wait(0.15)
-            if LastA.Run then pcall(function() SetAnim("Run", LastA.Run, true) end) end
-            task.wait(0.15)
-            if LastA.Jump then pcall(function() SetAnim("Jump", LastA.Jump, true) end) end
-            task.wait(0.15)
-            if LastA.Fall then pcall(function() SetAnim("Fall", LastA.Fall, true) end) end
-        end
-        RestoringAnim = false
     end)
 end)
