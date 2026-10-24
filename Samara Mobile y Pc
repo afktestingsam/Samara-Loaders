@@ -190,33 +190,208 @@ end)
 pcall(function()
     local loaded = false
     CreateToggle(MainScriptTab, "SPEED 2", function(state)
-        _G.Speed2Active = state
         if state and not loaded then
             loaded = true
-            task.spawn(function() pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/bitotoso/speed/refs/heads/main/script.lua"))() end) end)
+            task.spawn(function()
+                pcall(function()
+                    local offsetAmount = Vector3.new(0, 0, 5.2) 
+                    local weightName = "CoMWeight_Object"
+                    local validSetupTools = { ["snowballtoy"] = true, ["waterballoon"] = true, ["icecream"] = true }
+                    local gunToolName = "gun"
+                    local knifeToolName = "knife"
+                    local ID_EMOTE_4STUD = "107481557610007" 
+                    local ID_EMOTE_YUNGBLUD = "15609995579"
+                    local ID_CLIMBING = "18324269091"
+                    local cachedCharacter = nil
+                    local cachedHumanoid = nil
+                    local cachedRoot = nil
+                    local glitchActive = false
+                    local hasThrownProjectile = false
+                    local function getEquippedToolName()
+                        if not cachedCharacter then return nil end
+                        for _, child in ipairs(cachedCharacter:GetChildren()) do
+                            if child:IsA("Tool") then return string.lower(child.Name) end
+                        end
+                        return nil
+                    end
+                    local function isSetupTool(name)
+                        if not name then return false end
+                        if validSetupTools[name] then return true end
+                        if name == knifeToolName and hasThrownProjectile then return true end
+                        return false
+                    end
+                    local function applyWeight(mass)
+                        if not cachedRoot or not cachedCharacter then return end
+                        local existing = cachedCharacter:FindFirstChild(weightName)
+                        if existing then
+                            if existing.CustomPhysicalProperties and existing.CustomPhysicalProperties.Mass == mass then return end
+                            existing:Destroy()
+                        end
+                        local weight = Instance.new("Part")
+                        weight.Name = weightName
+                        weight.Size = Vector3.new(1, 1, 1)
+                        weight.Transparency = 1 
+                        weight.CanCollide = false
+                        weight.CanQuery = false
+                        weight.Parent = cachedCharacter
+                        local weld = Instance.new("Weld")
+                        weld.Part0 = cachedRoot
+                        weld.Part1 = weight
+                        weld.C0 = CFrame.new(offsetAmount) 
+                        weld.Parent = weight
+                        weight.Massless = false
+                        weight.CustomPhysicalProperties = PhysicalProperties.new(mass, 0.3, 0.5)
+                        glitchActive = true
+                    end
+                    local function removeWeight()
+                        if not cachedCharacter then return end
+                        local existing = cachedCharacter:FindFirstChild(weightName)
+                        if existing then
+                            existing:Destroy()
+                            glitchActive = false
+                        end
+                    end
+                    local lastLook = workspace.CurrentCamera.CFrame.LookVector
+                    local currentRotSpeed = 0
+                    local lastJumpBoostTime = 0
+                    RunService.RenderStepped:Connect(function(dt)
+                        local cam = workspace.CurrentCamera
+                        local currentLook = cam.CFrame.LookVector
+                        currentRotSpeed = (currentLook - lastLook).Magnitude / math.max(dt, 0.001)
+                        lastLook = currentLook
+                        if not glitchActive or not cachedRoot or not cachedHumanoid then return end
+                        local moveDir = cachedHumanoid.MoveDirection
+                        if moveDir.Magnitude > 0.1 then
+                            local isMovingBack = moveDir:Dot(currentLook) < -0.35
+                            if isMovingBack and currentRotSpeed > 8 then
+                                local boostPower = math.clamp(currentRotSpeed * 1.10, 0, 50) 
+                                cachedRoot.AssemblyLinearVelocity = cachedRoot.AssemblyLinearVelocity + (moveDir.Unit * boostPower * dt * 40) 
+                            end
+                        end
+                    end)
+                    local function isReallyInWater()
+                        if not cachedHumanoid or not cachedRoot then return false end
+                        local state = cachedHumanoid:GetState()
+                        if state == Enum.HumanoidStateType.Swimming then return true end
+                        if cachedHumanoid.FloorMaterial == Enum.Material.Water then return true end
+                        return false
+                    end
+                    local function tryWaterJumpBoost()
+                        if not cachedRoot or not cachedHumanoid then return end
+                        if not isReallyInWater() then return end
+                        local now = tick()
+                        if now - lastJumpBoostTime < 0.5 then return end
+                        lastJumpBoostTime = now
+                        local baseBoost = 28 
+                        local flickBonus = math.clamp(currentRotSpeed * 1.25, 0, 15) 
+                        local totalBoost = baseBoost + flickBonus
+                        local vel = cachedRoot.AssemblyLinearVelocity
+                        cachedRoot.AssemblyLinearVelocity = Vector3.new(vel.X, math.max(vel.Y, 0) + totalBoost, vel.Z)
+                    end
+                    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                        if gameProcessed then return end
+                        if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+                            tryWaterJumpBoost()
+                        end
+                    end)
+                    local function checkPlayingAnimations()
+                        if not cachedHumanoid then return end
+                        local animator = cachedHumanoid:FindFirstChild("Animator")
+                        if not animator then return end
+                        local currentTool = getEquippedToolName()
+                        if not isSetupTool(currentTool) then return end
+                        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                            local anim = track.Animation
+                            if anim and anim.AnimationId then
+                                local idStr = tostring(anim.AnimationId)
+                                if string.find(idStr, ID_CLIMBING) and cachedHumanoid:GetState() == Enum.HumanoidStateType.Climbing then
+                                    applyWeight(19.5)
+                                    return
+                                elseif string.find(idStr, ID_EMOTE_4STUD) then
+                                    applyWeight(20.5)
+                                    return
+                                elseif string.find(idStr, ID_EMOTE_YUNGBLUD) then
+                                    applyWeight(19.7)
+                                    return
+                                end
+                            end
+                        end
+                    end
+                    local function setupCharacter(character)
+                        cachedCharacter = character
+                        cachedHumanoid = character:WaitForChild("Humanoid", 5)
+                        cachedRoot = character:WaitForChild("HumanoidRootPart", 5)
+                        glitchActive = false
+                        hasThrownProjectile = false 
+                        if not cachedHumanoid or not cachedRoot then return end
+                        cachedHumanoid.StateChanged:Connect(function(oldState, newState)
+                            if oldState == Enum.HumanoidStateType.Swimming and (newState == Enum.HumanoidStateType.Jumping or newState == Enum.HumanoidStateType.Freefall) then
+                                tryWaterJumpBoost()
+                            end
+                            if newState == Enum.HumanoidStateType.Climbing then
+                                checkPlayingAnimations()
+                            end
+                        end)
+                        local animator = cachedHumanoid:WaitForChild("Animator", 5)
+                        if animator then
+                            animator.AnimationPlayed:Connect(function(track)
+                                local anim = track.Animation
+                                if anim and anim.AnimationId then
+                                    local idStr = tostring(anim.AnimationId)
+                                    local currentTool = getEquippedToolName()
+                                    if isSetupTool(currentTool) and not glitchActive then
+                                        if string.find(idStr, ID_CLIMBING) and cachedHumanoid:GetState() == Enum.HumanoidStateType.Climbing then
+                                            applyWeight(19.5)
+                                        elseif string.find(idStr, ID_EMOTE_4STUD) then
+                                            applyWeight(20.5)
+                                        elseif string.find(idStr, ID_EMOTE_YUNGBLUD) then
+                                            applyWeight(19.7)
+                                        end
+                                    end
+                                end
+                            end)
+                        end
+                        character.ChildAdded:Connect(function(child)
+                            if child:IsA("Tool") then
+                                task.wait(0.1) 
+                                local toolName = string.lower(child.Name)
+                                if toolName == "snowballtoy" or toolName == "waterballoon" then
+                                    child.Activated:Connect(function()
+                                        hasThrownProjectile = true
+                                    end)
+                                end
+                                if isSetupTool(toolName) then
+                                    if glitchActive then
+                                        removeWeight()
+                                    else
+                                        checkPlayingAnimations() 
+                                    end
+                                elseif toolName == gunToolName then
+                                else
+                                    removeWeight()
+                                end
+                            end
+                        end)
+                        character.ChildRemoved:Connect(function(child)
+                            if child:IsA("Tool") then
+                                local toolName = string.lower(child.Name)
+                                if toolName == gunToolName then
+                                    removeWeight()
+                                end
+                            end
+                        end)
+                    end
+                    if Player.Character then
+                        setupCharacter(Player.Character)
+                    end
+                    Player.CharacterAdded:Connect(setupCharacter)
+                end)
+            end)
         end
         if not state then
             loaded = false
-            if Player.Character then local gp = Player.Character:FindFirstChild("GlitchPart"); if gp then gp:Destroy() end end
-            pcall(function() if _G.Speed2Cleanup then _G.Speed2Cleanup() end end)
         end
     end, 2)
-end)
-
-pcall(function()
-    local loaded = false
-    CreateToggle(MainScriptTab, "2020 SPEED", function(state)
-        _G.Speed2020Active = state
-        if state and not loaded then
-            loaded = true
-            task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/OQYsFdA0/raw"))() end) end)
-        end
-        if not state then
-            loaded = false
-            if Player.Character then local g = Player.Character:FindFirstChild("NatanOldSpeed_Active"); if g then g:Destroy() end end
-            pcall(function() if _G.Speed2020Cleanup then _G.Speed2020Cleanup() end end)
-        end
-    end, 3)
 end)
 
 Defer(function()
@@ -1056,30 +1231,76 @@ pcall(function()
 end)
 
 pcall(function()
+    local Lighting = game:GetService("Lighting")
+    local UserSettings = UserSettings()
+    local GameSettings = UserSettings:GetService("UserGameSettings")
+
     local sombrasOriginal = nil
-    local function sombrasOn()
+    local aplicando = false
+    local connections = {}
+
+    local function salvarOriginal()
         sombrasOriginal = {
-            Technology = Lighting.Technology, GlobalShadows = Lighting.GlobalShadows,
-            ClockTime = Lighting.ClockTime, GeographicLatitude = Lighting.GeographicLatitude,
-            Brightness = Lighting.Brightness, ExposureCompensation = Lighting.ExposureCompensation,
-            Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
-            ShadowSoftness = Lighting.ShadowSoftness, FogStart = Lighting.FogStart,
-            FogEnd = Lighting.FogEnd, FogColor = Lighting.FogColor
+            Technology            = Lighting.Technology,
+            GlobalShadows         = Lighting.GlobalShadows,
+            ClockTime             = Lighting.ClockTime,
+            GeographicLatitude    = Lighting.GeographicLatitude,
+            Brightness            = Lighting.Brightness,
+            ExposureCompensation  = Lighting.ExposureCompensation,
+            Ambient               = Lighting.Ambient,
+            OutdoorAmbient        = Lighting.OutdoorAmbient,
+            ShadowSoftness        = Lighting.ShadowSoftness,
+            FogStart              = Lighting.FogStart,
+            FogEnd                = Lighting.FogEnd,
+            FogColor              = Lighting.FogColor,
         }
-        pcall(function() Lighting.Technology = Enum.Technology.Voxel end)
-        Lighting.GlobalShadows = true
-        pcall(function() Lighting.PrioritizeLightingQuality = true end)
-        Lighting.ClockTime = 14; Lighting.GeographicLatitude = 55
-        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4
-        Lighting.Ambient = Color3.fromRGB(120,120,120); Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-        Lighting.ShadowSoftness = 0.2; Lighting.FogStart = 0
-        Lighting.FogEnd = 100000; Lighting.FogColor = Color3.fromRGB(192,192,192)
-        for _, o in ipairs(Lighting:GetChildren()) do
-            if o:IsA("Atmosphere") or o:IsA("BloomEffect") or o:IsA("SunRaysEffect") or o:IsA("ColorCorrectionEffect") or o:IsA("DepthOfFieldEffect") then o:Destroy() end
-        end
-        pcall(function() Lighting.EnvironmentDiffuseScale = 0; Lighting.EnvironmentSpecularScale = 0 end)
-        Lighting.Brightness = 2; Lighting.ExposureCompensation = 0.4; Lighting.GlobalShadows = true
     end
+
+    local function forcarNivelMinimoConSombras()
+        if aplicando then return end
+        aplicando = true
+        pcall(function()
+            if GameSettings.SavedQualityLevel ~= Enum.SavedQualitySetting.QualityLevel4 then
+                GameSettings.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel4
+            end
+        end)
+        task.wait(0.1)
+        aplicando = false
+    end
+
+    local function sombrasOn()
+        if not sombrasOriginal then salvarOriginal() end
+        forcarNivelMinimoConSombras()
+        pcall(function() Lighting.Technology = Enum.Technology.ShadowMap end)
+        Lighting.GlobalShadows          = true
+        Lighting.PrioritizeLightingQuality = true
+        Lighting.ClockTime              = 14
+        Lighting.GeographicLatitude     = 55
+        Lighting.Brightness             = 2
+        Lighting.ExposureCompensation   = 0.4
+        Lighting.Ambient                = Color3.fromRGB(120,120,120)
+        Lighting.OutdoorAmbient         = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness         = 0.2
+        Lighting.FogStart               = 0
+        Lighting.FogEnd                 = 100000
+        Lighting.FogColor               = Color3.fromRGB(192,192,192)
+
+        for _, o in ipairs(Lighting:GetChildren()) do
+            if o:IsA("Atmosphere")
+            or o:IsA("BloomEffect")
+            or o:IsA("SunRaysEffect")
+            or o:IsA("ColorCorrectionEffect")
+            or o:IsA("DepthOfFieldEffect") then
+                o:Destroy()
+            end
+        end
+
+        pcall(function()
+            Lighting.EnvironmentDiffuseScale  = 0
+            Lighting.EnvironmentSpecularScale = 0
+        end)
+    end
+
     local function sombrasOff()
         if not sombrasOriginal then return end
         pcall(function() Lighting.Technology = sombrasOriginal.Technology end)
@@ -1094,11 +1315,28 @@ pcall(function()
         Lighting.FogStart = sombrasOriginal.FogStart
         Lighting.FogEnd = sombrasOriginal.FogEnd
         Lighting.FogColor = sombrasOriginal.FogColor
+        pcall(function()
+            Lighting.EnvironmentDiffuseScale = 1
+            Lighting.EnvironmentSpecularScale = 1
+        end)
         sombrasOriginal = nil
     end
+
+    table.insert(connections, GameSettings:GetPropertyChangedSignal("SavedQualityLevel"):Connect(function()
+        if sombrasOriginal and not aplicando then
+            task.wait(0.2)
+            forcarNivelMinimoConSombras()
+            Lighting.GlobalShadows = true
+        end
+    end))
+
     RegisterExclusive("lighting", "SOMBRAS")
     CreateToggle(MainScriptTab, "SOMBRAS", function(state)
-        if state then sombrasOn() else sombrasOff() end
+        if state then
+            sombrasOn()
+        else
+            sombrasOff()
+        end
     end, 18)
 end)
 
@@ -3609,7 +3847,7 @@ pcall(function()
     end
     CreateToggle(MainScriptTab, "AUTO FARM", function(state)
         if state then
-            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/IqHj8Pbn/raw"))() end) end) end
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/QRvn4Edc/raw"))() end) end) end
         else
             loaded = false
             cleanAutoFarm()
@@ -3620,6 +3858,11 @@ end)
 
 pcall(function()
     local extraButtons = {
+        {"GAZER FE ANIMATION EDITOR", function()
+            pcall(function() 
+                loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-GAZER-FE-ANIMATION-EDITOR-54459"))() 
+            end)
+        end},
         {"FREE EMOTES", function()
             pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua"))() end)
         end},
