@@ -14,6 +14,7 @@ local TextService = game:GetService("TextService")
 local GuiService = game:GetService("GuiService")
 local TweenService = game:GetService("TweenService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local StarterGui = game:GetService("StarterGui")
 local Workspace = workspace
 local Player = Players.LocalPlayer
 local player = Player
@@ -89,10 +90,16 @@ end
 
 local _origCreateToggle = CreateToggle
 CreateToggle = function(parent, name, callback, order)
+    local star = nil
     local wrappedCallback = function(state)
+        if star then
+            star.Image = state and FAV_ICON_ON or FAV_ICON_OFF
+        end
         pcall(callback, state)
     end
+
     local result = _origCreateToggle(parent, name, wrappedCallback, order)
+
     task.spawn(function()
         task.wait(0.3)
         local function findToggleUI(container, targetName, depth)
@@ -112,7 +119,8 @@ CreateToggle = function(parent, name, callback, order)
         local toggleFrame = findToggleUI(parent, name)
         if not toggleFrame then return end
         if toggleFrame:FindFirstChild("N4T_FavStar") then return end
-        local star = Instance.new("ImageLabel")
+        
+        star = Instance.new("ImageLabel")
         star.Name = "N4T_FavStar"
         star.Size = UDim2.fromOffset(18, 18)
         star.Position = UDim2.new(1, -45, 0.5, -9)
@@ -120,10 +128,6 @@ CreateToggle = function(parent, name, callback, order)
         star.Image = FAV_ICON_OFF
         star.ZIndex = 20
         star.Parent = toggleFrame
-        wrappedCallback = function(state)
-            star.Image = state and FAV_ICON_ON or FAV_ICON_OFF
-            pcall(callback, state)
-        end
     end)
     return result
 end
@@ -3857,6 +3861,231 @@ pcall(function()
 end)
 
 pcall(function()
+    local loaded = false
+    local TINY_HOTBAR_SCRIPT = [==[
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local DEBUG = false
+local EXACT_PATH = nil
+local NAMES = { backpack = true, backpackframe = true }
+
+if _G.TinyHotbarConn then
+    pcall(function() _G.TinyHotbarConn:Disconnect() end)
+    _G.TinyHotbarConn = nil
+end
+if _G.TinyHotbarCleanup then
+    pcall(_G.TinyHotbarCleanup)
+end
+
+local runId = {}
+_G.TinyHotbarRun = runId
+local connections = {}
+local targets = setmetatable({}, { __mode = "k" })
+local flipped = setmetatable({}, { __mode = "k" })
+
+local function track(conn)
+    table.insert(connections, conn)
+    return conn
+end
+
+_G.TinyHotbarCleanup = function()
+    for _, c in ipairs(connections) do
+        pcall(function() c:Disconnect() end)
+    end
+    table.clear(connections)
+    pcall(function() RunService:UnbindFromRenderStep("TinyHotbarHide") end)
+    for obj in pairs(flipped) do
+        pcall(function()
+            if obj.Parent then
+                obj.Visible = true
+            end
+        end)
+    end
+end
+
+if hookmetamethod and checkcaller and getnamecallmethod and not _G.TinyHotbarHooked then
+    _G.TinyHotbarHooked = true
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        if not checkcaller()
+            and self == StarterGui
+            and getnamecallmethod() == "SetCoreGuiEnabled" then
+            local coreType, enabled = ...
+            if coreType == Enum.CoreGuiType.Backpack and enabled == false then
+                return
+            end
+        end
+        return oldNamecall(self, ...)
+    end)
+end
+
+local pathPrefix = PlayerGui:GetFullName() .. "."
+
+local function relPath(obj)
+    local full = obj:GetFullName()
+    if full:sub(1, #pathPrefix) == pathPrefix then
+        return full:sub(#pathPrefix + 1)
+    end
+    return nil
+end
+
+local function normName(name)
+    return (name:lower():gsub("[%s_%-]", ""))
+end
+
+local function insideEmotes(obj)
+    local p = obj
+    while p and p ~= PlayerGui do
+        if p.Name:lower():find("emote", 1, true) then
+            return true
+        end
+        p = p.Parent
+    end
+    return false
+end
+
+local function isBackpackFrame(obj)
+    if not obj:IsA("GuiObject") then return false end
+    if EXACT_PATH then
+        return relPath(obj) == EXACT_PATH
+    end
+    if not NAMES[normName(obj.Name)] then return false end
+    return not insideEmotes(obj)
+end
+
+local function check(obj)
+    if targets[obj] then return end
+    local ok, result = pcall(isBackpackFrame, obj)
+    if ok and result then
+        targets[obj] = true
+    end
+end
+
+for _, obj in ipairs(PlayerGui:GetDescendants()) do
+    check(obj)
+end
+
+track(PlayerGui.DescendantAdded:Connect(check))
+
+task.spawn(function()
+    while _G.TinyHotbarRun == runId do
+        task.wait(2)
+        for _, obj in ipairs(PlayerGui:GetDescendants()) do
+            check(obj)
+        end
+    end
+end)
+
+pcall(function() RunService:UnbindFromRenderStep("TinyHotbarHide") end)
+RunService:BindToRenderStep("TinyHotbarHide", Enum.RenderPriority.Last.Value + 1, function()
+    for obj in pairs(targets) do
+        if obj.Parent then
+            if obj.Visible then
+                obj.Visible = false
+                flipped[obj] = true
+            end
+        else
+            targets[obj] = nil
+        end
+    end
+end)
+
+local KEYS = {
+    [Enum.KeyCode.One] = 1, [Enum.KeyCode.Two] = 2,
+    [Enum.KeyCode.Three] = 3, [Enum.KeyCode.Four] = 4,
+    [Enum.KeyCode.Five] = 5, [Enum.KeyCode.Six] = 6,
+    [Enum.KeyCode.Seven] = 7, [Enum.KeyCode.Eight] = 8,
+    [Enum.KeyCode.Nine] = 9,
+}
+
+local toolCache = {}
+local cacheValid = false
+
+local function invalidate() cacheValid = false end
+
+local function rebuildCache()
+    table.clear(toolCache)
+    local backpack = Player:FindFirstChildOfClass("Backpack")
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(toolCache, tool)
+            end
+        end
+    end
+    cacheValid = true
+end
+
+local function watchBackpack(backpack)
+    track(backpack.ChildAdded:Connect(invalidate))
+    track(backpack.ChildRemoved:Connect(invalidate))
+    invalidate()
+end
+
+local currentBackpack = Player:FindFirstChildOfClass("Backpack")
+if currentBackpack then watchBackpack(currentBackpack) end
+
+track(Player.ChildAdded:Connect(function(child)
+    if child:IsA("Backpack") then
+        watchBackpack(child)
+    end
+end))
+
+track(UserInputService.InputBegan:Connect(function(input, processed)
+    if processed or UserInputService:GetFocusedTextBox() then return end
+
+    local slot = KEYS[input.KeyCode]
+    if not slot then return end
+
+    if not cacheValid then rebuildCache() end
+    local tool = toolCache[slot]
+    local character = Player.Character
+    local bag = Player:FindFirstChildOfClass("Backpack")
+
+    if not (tool and character and bag) then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if tool.Parent == character then
+        humanoid:UnequipTools()
+    else
+        humanoid:EquipTool(tool)
+    end
+    invalidate()
+end))
+
+task.spawn(function()
+    while _G.TinyHotbarRun == runId do
+        pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true) end)
+        task.wait(1)
+    end
+end)
+
+pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true) end)
+]==]
+    CreateToggle(MainScriptTab, "ENABLE BACKPACK", function(state)
+        if state then
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(TINY_HOTBAR_SCRIPT)() end) end) end
+        else
+            loaded = false
+            pcall(function()
+                if _G.TinyHotbarCleanup then
+                    _G.TinyHotbarCleanup()
+                    _G.TinyHotbarCleanup = nil
+                end
+                _G.TinyHotbarRun = nil
+            end)
+        end
+    end, 41)
+end)
+
+pcall(function()
     local extraButtons = {
         {"GAZER FE ANIMATION EDITOR", function()
             pcall(function() 
@@ -3917,7 +4146,7 @@ pcall(function()
     status.BackgroundTransparency = 1
     status.Text = "SELECCIONA UN OBJETIVO"
     status.TextColor3 = COLOR_TEXT
-    status.Font = Enum.Font.Gotham status.TextSize = 12
+    status.Font = Enum.Font.GothamBold status.TextSize = 12
     status.TextXAlignment = Enum.TextXAlignment.Left
     status.Parent = FlingPage
     local frame = Instance.new("Frame")
