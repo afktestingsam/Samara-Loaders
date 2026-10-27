@@ -2774,7 +2774,7 @@ pcall(function()
     end
     CreateToggle(MainScriptTab, "GEAR GUI", function(state)
         if state then
-            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/0DFDOAmB/raw"))() end) end) end
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/ryCRDYSX/raw"))() end) end) end
         else
             loaded = false
             cleanGearGui()
@@ -4083,6 +4083,388 @@ pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true) e
             end)
         end
     end, 41)
+end)
+
+-- ============================================================
+-- 2023 TARGETING MOBILE
+-- ============================================================
+pcall(function()
+    local loaded = false
+    local activeDrawings = setmetatable({}, { __mode = "k" })
+    local tapGui = nil
+    local renderConn = nil
+    local charConn = nil
+    local BaseRadius = 30
+    local BaseGap = 6
+    local BaseLineLength = 10
+    local BaseCircleThickness = 4
+    local BaseLineThickness = 3.2
+
+    local function startTargeting()
+        local GUN_NAME = "Gun"
+        local KNIFE_NAME = "Knife"
+        local VICTORY_NAMES = {"Victory", "VictoryGui", "VictoryScreen", "EndScreen", "GameOver"}
+        local Camera = workspace.CurrentCamera
+        local UIS = UserInputService
+
+        tapGui = Instance.new("ScreenGui")
+        tapGui.Name = "tap2033"
+        tapGui.ResetOnSpawn = false
+        tapGui.IgnoreGuiInset = true
+        tapGui.DisplayOrder = 99999
+        tapGui.Parent = PlayerGui
+
+        local gunLabel = Instance.new("TextLabel")
+        gunLabel.Name = "GunText"
+        gunLabel.Size = UDim2.new(1, 0, 0, 30)
+        gunLabel.Position = UDim2.new(0.5, 0, 0, 5)
+        gunLabel.AnchorPoint = Vector2.new(0.5, 0)
+        gunLabel.BackgroundTransparency = 1
+        gunLabel.Text = "Tap a player to shoot"
+        gunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        gunLabel.Font = Enum.Font.GothamBold
+        gunLabel.TextSize = 18
+        gunLabel.Visible = false
+        gunLabel.ZIndex = 10
+        gunLabel.Parent = tapGui
+
+        local gunStroke = Instance.new("UIStroke")
+        gunStroke.Color = Color3.fromRGB(0, 0, 0)
+        gunStroke.Thickness = 0.5
+        gunStroke.Parent = gunLabel
+
+        local knifeLabel = Instance.new("TextLabel")
+        knifeLabel.Name = "KnifeText"
+        knifeLabel.Size = UDim2.new(1, 0, 0, 30)
+        knifeLabel.Position = UDim2.new(0.5, 0, 0, 5)
+        knifeLabel.AnchorPoint = Vector2.new(0.5, 0)
+        knifeLabel.BackgroundTransparency = 1
+        knifeLabel.Text = "Press equip and stand near someone to stab"
+        knifeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        knifeLabel.Font = Enum.Font.GothamBold
+        knifeLabel.TextSize = 16
+        knifeLabel.Visible = false
+        knifeLabel.ZIndex = 10
+        knifeLabel.Parent = tapGui
+
+        local knifeStroke = Instance.new("UIStroke")
+        knifeStroke.Color = Color3.fromRGB(0, 0, 0)
+        knifeStroke.Thickness = 0.5
+        knifeStroke.Parent = knifeLabel
+
+        if UIS.TouchEnabled then
+            gunLabel.TextSize = 15
+            knifeLabel.TextSize = 13
+        end
+
+        local lastWeaponType = nil
+
+        local function createUI()
+            local container = {}
+            container.Circle = Drawing.new("Circle")
+            container.Circle.Filled = false
+            container.Lines = {}
+            for i = 1, 4 do
+                local line = Drawing.new("Line")
+                table.insert(container.Lines, line)
+            end
+            container.Dots = {}
+            for i = 1, 4 do
+                local dot = Drawing.new("Circle")
+                dot.Filled = true
+                table.insert(container.Dots, dot)
+            end
+            return container
+        end
+
+        local function setVisibility(ui, visible)
+            ui.Circle.Visible = visible
+            for _, line in pairs(ui.Lines) do line.Visible = visible end
+            for _, dot in pairs(ui.Dots) do dot.Visible = visible end
+        end
+
+        local function removeAllDrawings()
+            for _, ui in pairs(activeDrawings) do
+                pcall(function() ui.Circle:Remove() end)
+                for _, line in pairs(ui.Lines) do pcall(function() line:Remove() end) end
+                for _, dot in pairs(ui.Dots) do pcall(function() dot:Remove() end) end
+            end
+            activeDrawings = setmetatable({}, { __mode = "k" })
+        end
+
+        renderConn = RunService.RenderStepped:Connect(function()
+            local Character = Player.Character
+            if not Character or not Character:FindFirstChild("HumanoidRootPart") then
+                gunLabel.Visible = false
+                knifeLabel.Visible = false
+                return
+            end
+
+            local backpack = Player:FindFirstChild("Backpack")
+            local hasGun = false
+            local hasKnife = false
+            local isVictory = false
+
+            if backpack then
+                if backpack:FindFirstChild(GUN_NAME, true) then hasGun = true end
+                if backpack:FindFirstChild(KNIFE_NAME, true) then hasKnife = true end
+            end
+            if Character:FindFirstChild(GUN_NAME, true) then hasGun = true end
+            if Character:FindFirstChild(KNIFE_NAME, true) then hasKnife = true end
+
+            local playerGui = Player:FindFirstChild("PlayerGui")
+            if playerGui then
+                for _, name in ipairs(VICTORY_NAMES) do
+                    local victoryObj = playerGui:FindFirstChild(name, true)
+                    if victoryObj then
+                        if victoryObj:IsA("ScreenGui") and victoryObj.Enabled then isVictory = true
+                        elseif victoryObj:IsA("GuiObject") and victoryObj.Visible then isVictory = true end
+                    end
+                end
+            end
+
+            if isVictory then
+                gunLabel.Visible = false
+                knifeLabel.Visible = false
+                for _, ui in pairs(activeDrawings) do setVisibility(ui, false) end
+                return
+            else
+                if hasGun and not hasKnife then
+                    gunLabel.Visible = true
+                    knifeLabel.Visible = false
+                elseif hasKnife and not hasGun then
+                    gunLabel.Visible = false
+                    knifeLabel.Visible = true
+                else
+                    gunLabel.Visible = false
+                    knifeLabel.Visible = false
+                end
+            end
+
+            local Tool = Character:FindFirstChildOfClass("Tool")
+            local isRoundActive = false
+            if Tool then
+                local toolName = string.lower(Tool.Name)
+                if string.find(toolName, "gun") then
+                    isRoundActive = true
+                    lastWeaponType = "gun"
+                elseif string.find(toolName, "knife") then
+                    isRoundActive = true
+                    lastWeaponType = "knife"
+                end
+            end
+
+            if not isRoundActive then
+                for _, ui in pairs(activeDrawings) do setVisibility(ui, false) end
+                return
+            end
+
+            local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            local playersFound = {}
+
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
+                if otherPlayer ~= Player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPart = otherPlayer.Character.HumanoidRootPart
+                    local rayOrigin = Camera.CFrame.Position
+                    local rayDirection = (targetPart.Position - rayOrigin)
+                    local distance = rayDirection.Magnitude
+
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {Character}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+                    local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+
+                    if raycastResult and raycastResult.Instance:IsDescendantOf(otherPlayer.Character) then
+                        playersFound[otherPlayer.Name] = true
+                        if not activeDrawings[otherPlayer.Name] then activeDrawings[otherPlayer.Name] = createUI() end
+                        local ui = activeDrawings[otherPlayer.Name]
+                        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+                        if onScreen then
+                            local scale = math.clamp(15 / distance, 0.2, 2.5)
+                            local currentRadius = BaseRadius * scale
+                            local currentGap = BaseGap * scale
+                            local currentLineLength = BaseLineLength * scale
+                            local currentCircleThickness = math.max(1, BaseCircleThickness * scale)
+                            local currentLineThickness = math.max(1, BaseLineThickness * scale)
+                            local isLocked = (Vector2.new(screenPos.X, screenPos.Y) - centerScreen).Magnitude < (40 * scale)
+                            local color = (lastWeaponType == "gun") and (isLocked and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 10, 10)) or Color3.fromRGB(0, 255, 0)
+
+                            ui.Circle.Position = Vector2.new(screenPos.X, screenPos.Y)
+                            ui.Circle.Color = color
+                            ui.Circle.Radius = currentRadius
+                            ui.Circle.Thickness = currentCircleThickness
+                            ui.Circle.Visible = true
+
+                            for _, line in pairs(ui.Lines) do line.Thickness = currentLineThickness end
+                            for _, dot in pairs(ui.Dots) do dot.Radius = currentLineThickness / 2 end
+
+                            ui.Lines[1].From = Vector2.new(screenPos.X, screenPos.Y - currentGap); ui.Lines[1].To = Vector2.new(screenPos.X, screenPos.Y - (currentGap + currentLineLength))
+                            ui.Lines[2].From = Vector2.new(screenPos.X, screenPos.Y + currentGap); ui.Lines[2].To = Vector2.new(screenPos.X, screenPos.Y + (currentGap + currentLineLength))
+                            ui.Lines[3].From = Vector2.new(screenPos.X - currentGap, screenPos.Y); ui.Lines[3].To = Vector2.new(screenPos.X - (currentGap + currentLineLength), screenPos.Y)
+                            ui.Lines[4].From = Vector2.new(screenPos.X + currentGap, screenPos.Y); ui.Lines[4].To = Vector2.new(screenPos.X + (currentGap + currentLineLength), screenPos.Y)
+
+                            ui.Dots[1].Position = Vector2.new(screenPos.X, screenPos.Y - (currentGap + currentLineLength))
+                            ui.Dots[2].Position = Vector2.new(screenPos.X, screenPos.Y + (currentGap + currentLineLength))
+                            ui.Dots[3].Position = Vector2.new(screenPos.X - (currentGap + currentLineLength), screenPos.Y)
+                            ui.Dots[4].Position = Vector2.new(screenPos.X + (currentGap + currentLineLength), screenPos.Y)
+
+                            for _, line in pairs(ui.Lines) do line.Color = color; line.Visible = true end
+                            for _, dot in pairs(ui.Dots) do dot.Color = color; dot.Visible = true end
+                        else
+                            setVisibility(ui, false)
+                        end
+                    else
+                        if activeDrawings[otherPlayer.Name] then setVisibility(activeDrawings[otherPlayer.Name], false) end
+                    end
+                end
+            end
+
+            for name, ui in pairs(activeDrawings) do
+                if not playersFound[name] then setVisibility(ui, false) end
+            end
+        end)
+
+        charConn = Player.CharacterAdded:Connect(function()
+            lastWeaponType = nil
+            for _, ui in pairs(activeDrawings) do setVisibility(ui, false) end
+        end)
+    end
+
+    local function stopTargeting()
+        if renderConn then renderConn:Disconnect() renderConn = nil end
+        if charConn then charConn:Disconnect() charConn = nil end
+        for _, ui in pairs(activeDrawings) do
+            pcall(function() ui.Circle:Remove() end)
+            for _, line in pairs(ui.Lines) do pcall(function() line:Remove() end) end
+            for _, dot in pairs(ui.Dots) do pcall(function() dot:Remove() end) end
+        end
+        activeDrawings = setmetatable({}, { __mode = "k" })
+        if tapGui then tapGui:Destroy() tapGui = nil end
+    end
+
+    CreateToggle(MainScriptTab, "2023 TARGETING MOBILE", function(state)
+        if state then
+            if not loaded then
+                loaded = true
+                task.spawn(startTargeting)
+            end
+        else
+            loaded = false
+            stopTargeting()
+        end
+    end, 42)
+end)
+
+-- ============================================================
+-- RADIO SCRIPT (Knife Display)
+-- ============================================================
+pcall(function()
+    local loaded = false
+    local weldRef = nil
+    local originalC0 = nil
+    local heartConn = nil
+    local charConn = nil
+
+    local targetPos = Vector3.new(-1.0500, -1.3945, 0.3011)
+    local targetRot = CFrame.Angles(-1.0364, 0.0657, 3.1148)
+    local finalCF = CFrame.new(targetPos) * targetRot
+
+    local function setupRadio()
+        local char = Player.Character
+        if not char then return end
+        local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if not torso then return end
+
+        local wd = workspace:FindFirstChild("WeaponDisplays")
+        if not wd then return end
+
+        local knife = nil
+        local minDist = 15
+        for _, v in ipairs(wd:GetChildren()) do
+            if v.Name == "KnifeDisplay" then
+                local dist = (v.Position - torso.Position).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    knife = v
+                end
+            end
+        end
+        if not knife then return end
+
+        if knife:IsA("BasePart") then
+            knife.Massless = true
+            knife.CanCollide = false
+        elseif knife:IsA("Model") then
+            for _, p in ipairs(knife:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.Massless = true
+                    p.CanCollide = false
+                end
+            end
+        end
+
+        local weld = nil
+        for _, j in ipairs(knife:GetJoints()) do
+            if j:IsA("Weld") or j:IsA("Motor6D") then weld = j; break end
+        end
+        if not weld then
+            for _, c in ipairs(knife:GetChildren()) do
+                if c:IsA("Weld") or c:IsA("Motor6D") then weld = c; break end
+            end
+        end
+        if not weld then
+            for _, c in ipairs(torso:GetChildren()) do
+                if (c:IsA("Weld") or c:IsA("Motor6D")) and (c.Part0 == knife or c.Part1 == knife) then
+                    weld = c; break
+                end
+            end
+        end
+        if not weld then
+            weld = Instance.new("Weld")
+            weld.Part0 = torso
+            weld.Part1 = knife
+            weld.Parent = knife
+        end
+
+        weldRef = weld
+        originalC0 = weld.C0
+        weld.C0 = finalCF
+
+        if heartConn then heartConn:Disconnect() end
+        heartConn = RunService.Heartbeat:Connect(function()
+            if weld and weld.Parent then
+                if weld.C0 ~= finalCF then weld.C0 = finalCF end
+            end
+        end)
+    end
+
+    local function cleanupRadio()
+        if heartConn then heartConn:Disconnect() heartConn = nil end
+        if weldRef and originalC0 and weldRef.Parent then
+            pcall(function() weldRef.C0 = originalC0 end)
+        end
+        weldRef = nil
+        originalC0 = nil
+    end
+
+    CreateToggle(MainScriptTab, "RADIO SCRIPT", function(state)
+        if state then
+            if not loaded then
+                loaded = true
+                if Player.Character then setupRadio() end
+                charConn = Player.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    if loaded then setupRadio() end
+                end)
+            end
+        else
+            loaded = false
+            if charConn then charConn:Disconnect() charConn = nil end
+            cleanupRadio()
+        end
+    end, 43)
 end)
 
 pcall(function()
