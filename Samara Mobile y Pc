@@ -650,30 +650,85 @@ end)
 end)
 
 -- ============================================================
--- TIMER MOBILE
+-- TIMER MOBILE (actualizado)
 -- ============================================================
 pcall(function()
     local loaded = false
     local TIMER_SCRIPT = [==[
 local lp = game:GetService("Players").LocalPlayer
 local pg = lp:WaitForChild("PlayerGui")
+
+-- Eliminar instancia anterior si existe
+local prev = pg:FindFirstChild("TimerGui")
+if prev then prev:Destroy() end
+
 local sg = Instance.new("ScreenGui")
-sg.Name = "TimerGui" sg.ResetOnSpawn = false sg.IgnoreGuiInset = true sg.Parent = pg
+sg.Name = "TimerGui"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.DisplayOrder = 999999
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = pg
+
 local tm = Instance.new("TextLabel")
-tm.Name = "Timer" tm.Parent = sg tm.BackgroundTransparency = 1
-tm.AnchorPoint = Vector2.new(0.5, 0) tm.Position = UDim2.new(0.5, 0, 0.08, 0)
-tm.Size = UDim2.fromOffset(300, 50) tm.Font = Enum.Font.GothamBold tm.TextSize = 34
-tm.TextColor3 = Color3.fromRGB(255,255,255) tm.TextStrokeTransparency = 0
-tm.TextStrokeColor3 = Color3.fromRGB(0,0,0) tm.TextXAlignment = Enum.TextXAlignment.Center
-tm.TextYAlignment = Enum.TextYAlignment.Center tm.Visible = false
-local function fmt(s) if typeof(s) ~= "number" or s < 0 then return "" end s = math.floor(s) local m = math.floor(s / 60) local r = s % 60 return string.format("%dm %02ds", m, r) end
+tm.Name = "Timer"
+tm.Parent = sg
+tm.BackgroundTransparency = 1
+
+tm.AnchorPoint = Vector2.new(0.5, 0)
+tm.Position = UDim2.new(0.5, 0, 0.06, 0)
+tm.Size = UDim2.fromOffset(320, 55)
+
+tm.Font = Enum.Font.SourceSansBold
+tm.TextSize = 42
+
+tm.TextColor3 = Color3.fromRGB(255, 255, 255)
+tm.TextStrokeTransparency = 0
+tm.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+tm.TextXAlignment = Enum.TextXAlignment.Center
+tm.TextYAlignment = Enum.TextYAlignment.Center
+
+tm.Visible = false
+tm.Active = false
+tm.Selectable = false
+
+local WHITE = Color3.fromRGB(255, 255, 255)
+local RED = Color3.fromRGB(255, 0, 0)
+
+local function fmt(s)
+    if typeof(s) ~= "number" or s < 0 then
+        return ""
+    end
+    s = math.floor(s)
+    local m = math.floor(s / 60)
+    local r = s % 60
+    if s <= 60 then
+        return tostring(s) .. "s"
+    end
+    return string.format("%dm %02ds", m, r)
+end
+
 task.spawn(function()
     while sg.Parent do
         local rt = workspace:FindFirstChild("RoundTimerPart")
         if rt then
             local t = rt:GetAttribute("Time")
-            if typeof(t) == "number" and t >= 0 then tm.Text = fmt(t) tm.Visible = true else tm.Text = "" tm.Visible = false end
-        else tm.Text = "" tm.Visible = false end
+            if typeof(t) == "number" and t >= 0 then
+                tm.Text = fmt(t)
+                if t <= 30 then
+                    tm.TextColor3 = RED
+                else
+                    tm.TextColor3 = WHITE
+                end
+                tm.Visible = true
+            else
+                tm.Text = ""
+                tm.Visible = false
+            end
+        else
+            tm.Text = ""
+            tm.Visible = false
+        end
         task.wait(0.1)
     end
 end)
@@ -685,8 +740,10 @@ end)
             loaded = false
             pcall(function()
                 local pg = Player:FindFirstChild("PlayerGui")
-                if pg then for _, g in ipairs(pg:GetChildren()) do if g.Name == "TimerGui" or g.Name:find("Timer") then pcall(function() g:Destroy() end) end end end
-                for _, g in ipairs(CoreGui:GetChildren()) do if g.Name == "TimerGui" or g.Name:find("Timer") then pcall(function() g:Destroy() end) end end
+                if pg then
+                    local g = pg:FindFirstChild("TimerGui")
+                    if g then g:Destroy() end
+                end
             end)
         end
     end, 6)
@@ -3457,7 +3514,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- ENABLE BACKPACK (actualizado - nuevo script con TopbarEnabled)
+-- ENABLE BACKPACK
 -- ============================================================
 pcall(function()
     local loaded = false
@@ -4023,7 +4080,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- EXTRA BUTTONS (GAZER, FREE EMOTES, CUSTOM SHIFTLOCK, FOG SELECTOR, DPI)
+-- EXTRA BUTTONS (GAZER, FREE EMOTES, CUSTOM SHIFTLOCK, FOG SELECTOR, DPI, VISUAL SKIN CHANGER)
 -- ============================================================
 pcall(function()
     local extraButtons = {
@@ -4041,6 +4098,9 @@ pcall(function()
         end},
         {"DPI", function()
             pcall(function() loadstring(game:HttpGet("https://pastefy.app/UTtyfYEY/raw"))() end)
+        end},
+        {"VISUAL SKIN CHANGER", function()
+            pcall(function() loadstring(game:HttpGet("https://pastefy.app/DZrsCXLG/raw"))() end)
         end},
     }
     for i, data in ipairs(extraButtons) do
@@ -4358,7 +4418,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- SKYS PAGE (mantenido con skyboxes)
+-- SKYS PAGE
 -- ============================================================
 pcall(function()
     local SkysContent = Instance.new("Frame")
