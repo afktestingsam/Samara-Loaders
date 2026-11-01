@@ -1,4 +1,4 @@
-local Library = local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/afktestingsam/huh/refs/heads/main/Testing%20Library%20Samara.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/afktestingsam/huh/refs/heads/main/Testing%20Library%20Samara.lua"))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -20,11 +20,10 @@ local Player = Players.LocalPlayer
 local player = Player
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- [ACTUALIZADO] Colores combinados con el nuevo tema pastel navideño de la imagen
-local COLOR_CREAM = Color3.fromRGB(255, 240, 240)   -- Fondo crema/rosado claro
-local COLOR_YELLOW = Color3.fromRGB(255, 166, 166)  -- Acento rojo/rosado pastel
-local COLOR_TEXT = Color3.fromRGB(122, 75, 75)      -- Texto marrón rojizo
-local COLOR_STROKE = Color3.fromRGB(232, 144, 144)  -- Bordes rosados
+local COLOR_CREAM = Color3.fromRGB(255, 240, 240)
+local COLOR_YELLOW = Color3.fromRGB(255, 166, 166)
+local COLOR_TEXT = Color3.fromRGB(122, 75, 75)
+local COLOR_STROKE = Color3.fromRGB(232, 144, 144)
 local FAV_ICON_OFF = "rbxassetid://94409679626604"
 local FAV_ICON_ON  = "rbxassetid://74074681952018"
 
@@ -147,9 +146,6 @@ if ExtraTab ~= MainScriptTab then hookContainer(ExtraTab) end
 if FlingPage and FlingPage ~= ExtraTab and FlingPage ~= MainScriptTab then hookContainer(FlingPage) end
 if SkysPage and SkysPage ~= ExtraTab and SkysPage ~= MainScriptTab and SkysPage ~= FlingPage then hookContainer(SkysPage) end
 
--- ============================================================
--- SPEED
--- ============================================================
 pcall(function()
     local speedActive = false
     local offsetAmount = Vector3.new(0,0,5.2)
@@ -204,9 +200,6 @@ pcall(function()
     end)
 end)
 
--- ============================================================
--- SPEED 2
--- ============================================================
 pcall(function()
     local loaded = false
     CreateToggle(MainScriptTab, "SPEED 2", function(state)
@@ -392,9 +385,6 @@ pcall(function()
     end, 2)
 end)
 
--- ============================================================
--- SOM ABAFADO
--- ============================================================
 pcall(function()
     local loaded = false
     local somConnections = {}
@@ -445,9 +435,6 @@ pcall(function()
     end, 3)
 end)
 
--- ============================================================
--- HALLOWEEN QUALITY
--- ============================================================
 pcall(function()
     local conn = nil
     local saved = {}
@@ -475,9 +462,6 @@ pcall(function()
     end, 4)
 end)
 
--- ============================================================
--- OLD GRAPHICS 2
--- ============================================================
 Defer(function()
     local loaded = false
     local MAP_LIGHTING_SCRIPT = [==[
@@ -650,16 +634,12 @@ end)
     end, 5)
 end)
 
--- ============================================================
--- TIMER MOBILE (actualizado)
--- ============================================================
 pcall(function()
     local loaded = false
     local TIMER_SCRIPT = [==[
 local lp = game:GetService("Players").LocalPlayer
 local pg = lp:WaitForChild("PlayerGui")
 
--- Eliminar instancia anterior si existe
 local prev = pg:FindFirstChild("TimerGui")
 if prev then prev:Destroy() end
 
@@ -750,9 +730,6 @@ end)
     end, 6)
 end)
 
--- ============================================================
--- SMALL NUMBER
--- ============================================================
 pcall(function()
     local active = false
     local conns = {}
@@ -795,9 +772,6 @@ pcall(function()
     end, 7)
 end)
 
--- ============================================================
--- ANTI COINS
--- ============================================================
 pcall(function()
     local active = false
     local conn = nil
@@ -840,9 +814,6 @@ pcall(function()
     end, 8)
 end)
 
--- ============================================================
--- SHIFTLOCK 2023
--- ============================================================
 pcall(function()
     local conn = nil
     local hum = nil
@@ -870,9 +841,6 @@ pcall(function()
     Player.CharacterAdded:Connect(onChar)
 end)
 
--- ============================================================
--- OLD CAM
--- ============================================================
 pcall(function()
     local on = false
     CreateToggle(MainScriptTab, "OLD CAM", function(state)
@@ -891,9 +859,6 @@ pcall(function()
     end)
 end)
 
--- ============================================================
--- OLD GRAPHICS
--- ============================================================
 pcall(function()
     local conns = {}
     local savedTime = 14
@@ -928,9 +893,6 @@ pcall(function()
     end, 11)
 end)
 
--- ============================================================
--- OLD SOUND
--- ============================================================
 pcall(function()
     local conns = {}
     local equip = nil
@@ -977,9 +939,6 @@ pcall(function()
     end, 12)
 end)
 
--- ============================================================
--- GUN SOUND 2023
--- ============================================================
 pcall(function()
     local conns = {}
     local GUN_ID = "rbxassetid://6968135315"
@@ -1020,9 +979,6 @@ pcall(function()
     Player.CharacterAdded:Connect(function(c) if snd.Volume > 0 then task.wait(.5); snd.Volume = 1; setup(c) end end)
 end)
 
--- ============================================================
--- SOMBRAS
--- ============================================================
 pcall(function()
     local Lighting = game:GetService("Lighting")
     local UserSettings = UserSettings()
@@ -1090,9 +1046,6 @@ pcall(function()
     end, 14)
 end)
 
--- ============================================================
--- CONFETI
--- ============================================================
 pcall(function()
     local confeteConnections = {}
     local LAG_DURATION = 1
@@ -1134,9 +1087,6 @@ pcall(function()
     end, 15)
 end)
 
--- ============================================================
--- ANTI-CLICK
--- ============================================================
 pcall(function()
     local antiClickActive = false
     local originalStates = {}
@@ -1199,9 +1149,6 @@ pcall(function()
     end)
 end)
 
--- ============================================================
--- OLD THROW
--- ============================================================
 pcall(function()
     local conns = {}
     _G.ThrowDelay = 0.06
@@ -1249,9 +1196,6 @@ pcall(function()
     end, 17)
 end)
 
--- ============================================================
--- KORBLOX
--- ============================================================
 pcall(function()
     local conns = {}
     local origs = {}
@@ -1303,9 +1247,6 @@ pcall(function()
     end, 18)
 end)
 
--- ============================================================
--- PLAYER CHAMS
--- ============================================================
 Defer(function()
     local active = false
     local globalConns = {}
@@ -1406,9 +1347,6 @@ Defer(function()
     end, 19)
 end)
 
--- ============================================================
--- OLD ANIMATIONS
--- ============================================================
 pcall(function()
     CreateToggle(MainScriptTab, "OLD ANIMATIONS", function(state)
         if state then workspace.Retargeting = Enum.AnimatorRetargetingMode.Disabled
@@ -1416,9 +1354,6 @@ pcall(function()
     end, 20)
 end)
 
--- ============================================================
--- VOICE CHAT 2023
--- ============================================================
 pcall(function()
     local voice2023Connections = {}
     local RAW_ASSET_ID = "97664450574335"
@@ -1491,9 +1426,6 @@ pcall(function()
     end, 21)
 end)
 
--- ============================================================
--- VOICE CHAT 2
--- ============================================================
 pcall(function()
     local VC_STATE = { active = false, loaded = false, screenGui = nil, renderConn = nil, unmuted = false, animationId = 0, holder = nil, mutedLabel = nil, frameLabels = {}, charConn = nil }
     local RNG = Random.new()
@@ -1641,9 +1573,6 @@ pcall(function()
     end, 22)
 end)
 
--- ============================================================
--- PRIVATE COINS
--- ============================================================
 Defer(function()
     local loaded = false
     local PRIVATE_COINS_SCRIPT = [==[
@@ -1920,9 +1849,6 @@ end)
     end, 23)
 end)
 
--- ============================================================
--- 2023 BODY SCALE
--- ============================================================
 pcall(function()
     local bodyConnections = {}
     local bodySession = 0
@@ -1974,9 +1900,6 @@ pcall(function()
     end, 24)
 end)
 
--- ============================================================
--- 2023 XP
--- ============================================================
 pcall(function()
     local xpConnections = {}
     local originalPositions = {}
@@ -2018,9 +1941,6 @@ pcall(function()
     end, 25)
 end)
 
--- ============================================================
--- CANDY COINS
--- ============================================================
 Defer(function()
     local loaded = false
     local CANDY_COINS_SCRIPT = [==[
@@ -2271,9 +2191,6 @@ end)
     end, 26)
 end)
 
--- ============================================================
--- GRAB GUN
--- ============================================================
 Defer(function()
     local loaded = false
     local GRAB_GUN_SCRIPT = [==[
@@ -2385,9 +2302,6 @@ _G.GrabGunConn = conn
     end, 27)
 end)
 
--- ============================================================
--- ANTI STEALER
--- ============================================================
 pcall(function()
     local loaded = false
     local ANTI_STEALER_SCRIPT = [==[
@@ -2475,9 +2389,6 @@ end)
     end, 28)
 end)
 
--- ============================================================
--- GEAR GUI
--- ============================================================
 pcall(function()
     local loaded = false
     local function cleanGearGui()
@@ -2502,9 +2413,6 @@ pcall(function()
     end, 29)
 end)
 
--- ============================================================
--- SNOWBALL, WATER BALLOON
--- ============================================================
 Defer(function()
     local loaded = false
     local SNOWBALL_SCRIPT = [==[
@@ -3155,9 +3063,6 @@ end))
     end, 30)
 end)
 
--- ============================================================
--- BUBBLE CHAT 2023
--- ============================================================
 pcall(function()
     local chatOldConnections = {}
     local baloesChat = {}
@@ -3285,9 +3190,6 @@ pcall(function()
     end, 31)
 end)
 
--- ============================================================
--- EMOTE TOOL
--- ============================================================
 pcall(function()
     local toolCreated = false
     local function isMobile()
@@ -3487,9 +3389,6 @@ pcall(function()
     end, 32)
 end)
 
--- ============================================================
--- AUTO FARM
--- ============================================================
 pcall(function()
     local loaded = false
     local function cleanAutoFarm()
@@ -3514,9 +3413,6 @@ pcall(function()
     end, 33)
 end)
 
--- ============================================================
--- ENABLE BACKPACK
--- ============================================================
 pcall(function()
     local loaded = false
     local TINY_HOTBAR_SCRIPT = [==[
@@ -3754,9 +3650,6 @@ end)
     end, 34)
 end)
 
--- ============================================================
--- 2023 TARGETING MOBILE
--- ============================================================
 pcall(function()
     local loaded = false
     local cleanupTargeting = nil
@@ -3988,9 +3881,6 @@ pcall(function()
     end, 35)
 end)
 
--- ============================================================
--- RADIO SCRIPT
--- ============================================================
 pcall(function()
     local loaded = false
     local weldRef = nil
@@ -4080,9 +3970,6 @@ pcall(function()
     end, 36)
 end)
 
--- ============================================================
--- EXTRA BUTTONS (GAZER, FREE EMOTES, CUSTOM SHIFTLOCK, FOG SELECTOR, DPI, VISUAL SKIN CHANGER)
--- ============================================================
 pcall(function()
     local extraButtons = {
         {"GAZER FE ANIMATION EDITOR", function()
@@ -4129,9 +4016,6 @@ pcall(function()
     end
 end)
 
--- ============================================================
--- FLING PAGE
--- ============================================================
 pcall(function()
     local SelectedTargets = {}
     local PlayerCheckboxes = {}
@@ -4418,9 +4302,6 @@ pcall(function()
     Refresh(); UpdateStatus()
 end)
 
--- ============================================================
--- SKYS PAGE (Nuevos botones con miniaturas)
--- ============================================================
 pcall(function()
     local SkysContent = Instance.new("Frame")
     SkysContent.Size = UDim2.new(1,-40,0,0); SkysContent.Position = UDim2.new(0,20,0,44)
@@ -4451,21 +4332,19 @@ pcall(function()
         task.defer(function() AddButtonSweep(b, s) end)
 
         if thumbId then
-            -- Mover texto a la derecha para dejar espacio a la miniatura
             b.TextXAlignment = Enum.TextXAlignment.Left
             local pad = Instance.new("UIPadding", b)
             pad.PaddingLeft = UDim.new(0, 42)
 
             local thumb = Instance.new("ImageLabel")
             thumb.Size = UDim2.fromOffset(26, 26)
-            thumb.Position = UDim2.new(0, 8, 0.5, -13)
+            thumb.Position = UDim2.new(0, -34, 0.5, -13)
             thumb.BackgroundTransparency = 1
             thumb.ScaleType = Enum.ScaleType.Crop
             thumb.Image = "rbxassetid://" .. thumbId
             thumb.Parent = b
             Instance.new("UICorner", thumb).CornerRadius = UDim.new(0, 6)
 
-            -- Borde ligero para que la miniatura destaque
             local ts = Instance.new("UIStroke", thumb)
             ts.Color = COLOR_STROKE
             ts.Thickness = 1
@@ -4520,7 +4399,6 @@ pcall(function()
         s.Parent = Lighting
     end
     for i, sd in ipairs(Skyboxes) do
-        -- Le pasamos sd.Front como el thumbId
         local b = MakeBtn(sd.Name:upper(), 5 + i, nil, sd.Front)
         b.MouseButton1Click:Connect(function() ApplySky(sd) end)
     end
