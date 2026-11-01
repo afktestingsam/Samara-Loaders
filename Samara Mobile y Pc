@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/afktestingsam/huh/refs/heads/main/Testing%20Library%20Samara.lua"))()
+Local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/afktestingsam/huh/refs/heads/main/Testing%20Library%20Samara.lua"))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -20,10 +20,11 @@ local Player = Players.LocalPlayer
 local player = Player
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local COLOR_CREAM = Color3.fromRGB(255, 248, 220)
-local COLOR_YELLOW = Color3.fromRGB(255, 220, 100)
-local COLOR_TEXT = Color3.fromRGB(80, 60, 40)
-local COLOR_STROKE = Color3.fromRGB(255, 200, 50)
+-- [ACTUALIZADO] Colores combinados con el nuevo tema pastel navideño de la imagen
+local COLOR_CREAM = Color3.fromRGB(255, 240, 240)   -- Fondo crema/rosado claro
+local COLOR_YELLOW = Color3.fromRGB(255, 166, 166)  -- Acento rojo/rosado pastel
+local COLOR_TEXT = Color3.fromRGB(122, 75, 75)      -- Texto marrón rojizo
+local COLOR_STROKE = Color3.fromRGB(232, 144, 144)  -- Bordes rosados
 local FAV_ICON_OFF = "rbxassetid://94409679626604"
 local FAV_ICON_ON  = "rbxassetid://74074681952018"
 
@@ -4175,7 +4176,7 @@ pcall(function()
 
     local stopBtn = Instance.new("TextButton")
     stopBtn.Size = UDim2.new(0.48,0,1,0); stopBtn.Position = UDim2.new(0.52,0,0,0)
-    stopBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 150); stopBtn.Text = "STOP"
+    stopBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 200); stopBtn.Text = "STOP"
     stopBtn.TextColor3 = COLOR_TEXT; stopBtn.Font = Enum.Font.GothamBold; stopBtn.TextSize = 12
     stopBtn.AutoButtonColor = false
     stopBtn.Parent = btnC; Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0,8)
@@ -4220,18 +4221,18 @@ pcall(function()
             if plr ~= Player then
                 hasOther = true
                 local pe = Instance.new("Frame")
-                pe.Size = UDim2.new(1,-5,0,44); pe.BackgroundColor3 = Color3.fromRGB(255, 245, 210)
+                pe.Size = UDim2.new(1,-5,0,44); pe.BackgroundColor3 = Color3.fromRGB(255, 245, 245)
                 pe.LayoutOrder = lo; pe.Parent = scroll
                 Instance.new("UICorner", pe).CornerRadius = UDim.new(0,8)
 
                 local cb = Instance.new("TextButton")
                 cb.Size = UDim2.fromOffset(22,22); cb.Position = UDim2.fromOffset(6,11)
-                cb.BackgroundColor3 = Color3.fromRGB(240, 230, 195); cb.Text = ""; cb.Parent = pe
+                cb.BackgroundColor3 = Color3.fromRGB(255, 225, 225); cb.Text = ""; cb.Parent = pe
                 Instance.new("UICorner", cb).CornerRadius = UDim.new(0,5)
 
                 local cm = Instance.new("TextLabel")
                 cm.Size = UDim2.new(1,0,1,0); cm.BackgroundTransparency = 1; cm.Text = "✓"
-                cm.TextColor3 = Color3.fromRGB(0,180,0); cm.TextSize = 18; cm.Font = Enum.Font.SourceSansBold
+                cm.TextColor3 = Color3.fromRGB(230, 100, 100); cm.TextSize = 18; cm.Font = Enum.Font.SourceSansBold
                 cm.Visible = SelectedTargets[plr.Name] ~= nil; cm.Parent = cb
 
                 local avatar = Instance.new("ImageLabel")
@@ -4272,7 +4273,7 @@ pcall(function()
             lb.Size = UDim2.new(1,-10,0,20); lb.BackgroundTransparency = 1
             lb.Text = "No hay otros jugadores en el servidor"
             lb.TextXAlignment = Enum.TextXAlignment.Center
-            lb.TextColor3 = Color3.fromRGB(150, 130, 100); lb.TextSize = 11
+            lb.TextColor3 = Color3.fromRGB(180, 130, 130); lb.TextSize = 11
             lb.Font = Enum.Font.Gotham; lb.LayoutOrder = 1
             lb.Parent = scroll
         end
@@ -4418,7 +4419,7 @@ pcall(function()
 end)
 
 -- ============================================================
--- SKYS PAGE
+-- SKYS PAGE (Nuevos botones con miniaturas)
 -- ============================================================
 pcall(function()
     local SkysContent = Instance.new("Frame")
@@ -4428,21 +4429,52 @@ pcall(function()
     SkysContent.Parent = SkysPage
     local scl = Instance.new("UIListLayout", SkysContent)
     scl.Padding = UDim.new(0,6) scl.SortOrder = Enum.SortOrder.LayoutOrder
-    local function MakeBtn(text, order, color)
+    
+    local function MakeBtn(text, order, color, thumbId)
         local b = Instance.new("TextButton")
         b.Size = UDim2.new(1,0,0,34)
         b.BackgroundColor3 = color or COLOR_CREAM
         b.Text = text
         b.TextColor3 = COLOR_TEXT
-        b.TextSize = 12 b.Font = Enum.Font.GothamBold
-        b.AutoButtonColor = false b.LayoutOrder = order b.Parent = SkysContent
+        b.TextSize = 12 
+        b.Font = Enum.Font.GothamBold
+        b.AutoButtonColor = false 
+        b.LayoutOrder = order 
+        b.Parent = SkysContent
         Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+        
         local s = Instance.new("UIStroke", b)
-        s.Color = COLOR_STROKE s.Thickness = 1
-        s.Transparency = 0.5 s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        s.Color = COLOR_STROKE 
+        s.Thickness = 1
+        s.Transparency = 0.5 
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         task.defer(function() AddButtonSweep(b, s) end)
+
+        if thumbId then
+            -- Mover texto a la derecha para dejar espacio a la miniatura
+            b.TextXAlignment = Enum.TextXAlignment.Left
+            local pad = Instance.new("UIPadding", b)
+            pad.PaddingLeft = UDim.new(0, 42)
+
+            local thumb = Instance.new("ImageLabel")
+            thumb.Size = UDim2.fromOffset(26, 26)
+            thumb.Position = UDim2.new(0, 8, 0.5, -13)
+            thumb.BackgroundTransparency = 1
+            thumb.ScaleType = Enum.ScaleType.Crop
+            thumb.Image = "rbxassetid://" .. thumbId
+            thumb.Parent = b
+            Instance.new("UICorner", thumb).CornerRadius = UDim.new(0, 6)
+
+            -- Borde ligero para que la miniatura destaque
+            local ts = Instance.new("UIStroke", thumb)
+            ts.Color = COLOR_STROKE
+            ts.Thickness = 1
+            ts.Transparency = 0.5
+        end
+
         return b
     end
+
     local Skyboxes = {
         {Name="Sky 1",Back="122934223825685",Down="115889796012252",Front="127432502457919",Left="118552411654693",Right="79507204666851",Up="90208876152081"},
         {Name="Sky 2",Back="139390286893123",Down="121969345727987",Front="102819125070844",Left="86079154252447",Right="78213322249241",Up="89785225740474"},
@@ -4488,10 +4520,11 @@ pcall(function()
         s.Parent = Lighting
     end
     for i, sd in ipairs(Skyboxes) do
-        local b = MakeBtn(sd.Name:upper(), 5 + i)
+        -- Le pasamos sd.Front como el thumbId
+        local b = MakeBtn(sd.Name:upper(), 5 + i, nil, sd.Front)
         b.MouseButton1Click:Connect(function() ApplySky(sd) end)
     end
-    local resetBtn = MakeBtn("RESET SKY TO DEFAULT", 500, Color3.fromRGB(255, 200, 150))
+    local resetBtn = MakeBtn("RESET SKY TO DEFAULT", 500, Color3.fromRGB(255, 200, 200))
     resetBtn.MouseButton1Click:Connect(function()
         for _, o in ipairs(Lighting:GetChildren()) do if o:IsA("Sky") then o:Destroy() end end
     end)
