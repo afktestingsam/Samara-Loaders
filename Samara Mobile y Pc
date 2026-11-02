@@ -2404,7 +2404,7 @@ pcall(function()
     end
     CreateToggle(MainScriptTab, "GEAR GUI", function(state)
         if state then
-            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://pastefy.app/ryCRDYSX/raw"))() end) end) end
+            if not loaded then loaded = true; task.spawn(function() pcall(function() loadstring(game:HttpGet("https://gist.githubusercontent.com/afktestingsam/ff47ca49b83b15ab91754432ea70f24e/raw/73511dc8aaa59b79374fd6dab7c55bb14d2af756/gistfile1.txt"))() end) end) end
         else
             loaded = false
             cleanGearGui()
