@@ -3979,13 +3979,13 @@ pcall(function()
             pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua"))() end)
         end},
         {"CUSTOM SHIFTLOCK", function()
-            pcall(function() loadstring(game:HttpGet("https://pastefy.app/FvWuWuH5/raw"))() end)
+            pcall(function() loadstring(game:HttpGet("https://gist.githubusercontent.com/afktestingsam/992f3cb11caaa487f97c0fe371c7a100/raw/e20d23f6f4b3fb03119a0d4412129c96ef69a6c7/gistfile1.txt"))() end)
         end},
         {"FOG SELECTOR", function()
-            pcall(function() loadstring(game:HttpGet("https://pastefy.app/8QJCOhgv/raw"))() end)
+            pcall(function() loadstring(game:HttpGet("https://gist.githubusercontent.com/afktestingsam/ccd39d537bb8c0e72e2289700622503c/raw/932d68481f655741e02a8890c245d844305751c2/gistfile1.txt"))() end)
         end},
         {"DPI", function()
-            pcall(function() loadstring(game:HttpGet("https://pastefy.app/UTtyfYEY/raw"))() end)
+            pcall(function() loadstring(game:HttpGet("https://gist.githubusercontent.com/afktestingsam/ad09f697b68c8bb8cba67c7d9cd897c6/raw/7052c6bf093b2f222d276ebed8c09e0ab88ac2c3/gistfile1.txt"))() end)
         end},
         {"VISUAL SKIN CHANGER", function()
             pcall(function() loadstring(game:HttpGet("https://pastefy.app/DZrsCXLG/raw"))() end)
