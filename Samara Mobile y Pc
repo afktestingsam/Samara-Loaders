@@ -3990,7 +3990,10 @@ pcall(function()
         {"VISUAL SKIN CHANGER", function()
             pcall(function() loadstring(game:HttpGet("https://pastefy.app/DZrsCXLG/raw"))() end)
         end},
-    }
+        {"Matrix Recolor", function()
+            pcall(function() loadstring(game:HttpGet("loadstring(game:HttpGet("https://raw.githubusercontent.com/samxzqpq/Quetimporta/refs/heads/main/MatrixRecolor.Lua"))()"))() end)
+        end},
+        
     for i, data in ipairs(extraButtons) do
         local wrap = Instance.new("Frame")
         wrap.Size = UDim2.new(1, 0, 0, 34)
