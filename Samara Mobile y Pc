@@ -3991,8 +3991,9 @@ pcall(function()
             pcall(function() loadstring(game:HttpGet("https://pastefy.app/DZrsCXLG/raw"))() end)
         end},
         {"Matrix Recolor", function()
-            pcall(function() loadstring(game:HttpGet("loadstring(game:HttpGet("https://raw.githubusercontent.com/samxzqpq/Quetimporta/refs/heads/main/MatrixRecolor.Lua"))()"))() end)
-        end},
+            pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/samxzqpq/Quetimporta/refs/heads/main/MatrixRecolor.Lua"))() end)
+        end}
+    } -- LA LLAVE FALTANTE SE AÑADIÓ AQUÍ
         
     for i, data in ipairs(extraButtons) do
         local wrap = Instance.new("Frame")
