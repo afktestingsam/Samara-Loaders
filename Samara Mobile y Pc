@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/samxzqpq/1933f7fced972b13476978b1c93f93fe/raw/648c6a3661bbf283f17c84a3ce0418f0dad76c5d/gistfile1.txt"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/afktestingsam/huh/refs/heads/main/Testing%20Library%20Samara.lua"))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
